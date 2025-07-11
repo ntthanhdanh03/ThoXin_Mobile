@@ -116,7 +116,7 @@ const RegisterView = () => {
                     <Spacer height={35} />
                     <View style={{ paddingHorizontal: scaleModerate(20) }}>
                         <Input
-                            title={('name') + '*'}
+                            title={('Họ và tên') + '*'}
                             value={form.name?.value}
                             onChangeText={(text) => {
                                 setForm({
@@ -129,19 +129,7 @@ const RegisterView = () => {
                         />
                         <Spacer height={20} />
                         <Input
-                            title={('email')}
-                            value={form.email?.value}
-                            onChangeText={(text) => {
-                                setForm({
-                                    ...form,
-                                    email: { value: text, error: false, message: '' },
-                                })
-                            }}
-                            error={form.email?.error}
-                        />
-                        <Spacer height={20} />
-                        <Input
-                            title={('phoneNumber') + '* (Tên đăng nhập)'}
+                            title={('Số điện thoại') + '* (Tên đăng nhập)'}
                             keyboardType="phone-pad"
                             value={form.username.value}
                             onChangeText={(text) => {
@@ -155,7 +143,7 @@ const RegisterView = () => {
                         />
                         <Spacer height={20} />
                         <Input
-                            title={('password') + '*'}
+                            title={('Mật khẩu') + '*'}
                             type="password"
                             value={form.password.value}
                             onChangeText={(text) => {
@@ -169,7 +157,7 @@ const RegisterView = () => {
                         />
                         <Spacer height={20} />
                         <Input
-                            title={('reTypePassword') + '*'}
+                            title={('Nhập lại mật khẩu') + '*'}
                             type="password"
                             value={form.reTypePassword.value}
                             onChangeText={(text) => {
@@ -184,14 +172,12 @@ const RegisterView = () => {
                     </View>
                     <Spacer height={20} />
                     <View style={{ alignItems: 'center' }}>
-                        <Text style={[DefaultStyles.textRegular14Black, { textAlign: 'center' }]}>
-                            {('bySignUp')}
-                        </Text>
+                       
                         
                     </View>
 
                     <Spacer height={16} />
-                    <Button isColor title={('signUp')} onPress={handlePressSignUp} />
+                    <Button isColor title={('Đăng ký')} onPress={handlePressSignUp} />
                     <Spacer height={30} />
                     <View style={{ alignItems: 'center' }}>
                         <Text
@@ -200,7 +186,7 @@ const RegisterView = () => {
                                 navigation.navigate('LoginView' as never)
                             }}
                         >
-                            {('haveAccount')}
+                            {('Bạn đã có tài khoản? Đăng nhập')}
                         </Text>
                     </View>
                 </View>

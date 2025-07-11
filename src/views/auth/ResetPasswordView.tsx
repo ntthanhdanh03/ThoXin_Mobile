@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+
 import { useTranslation } from 'react-i18next'
 import { DefaultStyles } from '../../styles/DefaultStyles'
 import Spacer from '../components/Spacer'
@@ -12,21 +12,14 @@ import { defaultField } from '../../utils/formUtils'
 import _ from 'lodash'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import GlobalModalController from '../components/GlobalModal/GlobalModalController'
-import {
-    resetPasswordAction,
-    updateCustomerAction,
-    updatePasswordAction,
-    updateUserAction,
-} from '../../store/actions/authAction'
 import LoadingView from '../components/LoadingView'
 import { scaleModerate } from '../../styles/scaleDimensions'
 import HeaderV2 from '../components/HeaderV2'
 import { useNavigation } from '@react-navigation/native'
-import { parseError } from '../../utils/errorUtils'
+
 
 const ResetPasswordView = ({ route }: any) => {
-    const { t } = useTranslation()
-    const dispatch = useDispatch()
+
     const navigation = useNavigation()
     const [form, setForm] = useState<IForm>({
         passwordNew: defaultField,
@@ -55,8 +48,8 @@ const ResetPasswordView = ({ route }: any) => {
         }
         if (isValid && form.passwordNew.value !== form.reTypePassword.value) {
             GlobalModalController.showModal({
-                title: t('fail'),
-                description: t('confirmPasswordNotMatch'),
+                title: ('fail'),
+                description: ('confirmPasswordNotMatch'),
                 icon: 'fail',
             })
             isValid = false
@@ -74,62 +67,16 @@ const ResetPasswordView = ({ route }: any) => {
 
             if (infoChangePassword[0]?.userType === 'lawyer') {
                 console.log('user')
-                dispatch(
-                    updatePasswordAction(
-                        { id: infoChangePassword[0]?.id, updateData, type: 'Lawyer' },
-                        (data: any, error: any) => {
-                            if (data === 'Cập nhập mật khẩu thành công') {
-                                setIsLoading(false)
-                                GlobalModalController.showModal({
-                                    title: t('success'),
-                                    icon: 'success',
-                                })
-                                GlobalModalController.onActionChange(() => {
-                                    navigation.navigate('LoginView' as never)
-                                })
-                            } else {
-                                setIsLoading(false)
-                                GlobalModalController.showModal({
-                                    title: t('signUp'),
-                                    description: parseError(error).message,
-                                    icon: 'fail',
-                                })
-                            }
-                        }
-                    )
-                )
+            
             } else {
-                dispatch(
-                    updatePasswordAction(
-                        { id: infoChangePassword[0]?.id, updateData, type: 'Customers' },
-                        (data: any, error: any) => {
-                            if (data === 'Cập nhập mật khẩu thành công') {
-                                setIsLoading(false)
-                                GlobalModalController.showModal({
-                                    title: t('success'),
-                                    icon: 'success',
-                                })
-                                GlobalModalController.onActionChange(() => {
-                                    navigation.navigate('LoginView' as never)
-                                })
-                            } else {
-                                setIsLoading(false)
-                                GlobalModalController.showModal({
-                                    title: t('signUp'),
-                                    description: parseError(error).message,
-                                    icon: 'fail',
-                                })
-                            }
-                        }
-                    )
-                )
+                
             }
         }
     }
 
     return (
         <SafeAreaView style={DefaultStyles.container}>
-            <HeaderV2 title={t('changePassword')} isBack={true} type="simple" />
+            <HeaderV2 title={('changePassword')} isBack={true} type="simple" />
             <KeyboardAwareScrollView>
                 <View style={DefaultStyles.wrapBody}>
                     <Spacer height={6} />
@@ -138,7 +85,7 @@ const ResetPasswordView = ({ route }: any) => {
                     <View style={{ paddingHorizontal: scaleModerate(20) }}>
                         <Spacer height={10} />
                         <Input
-                            title={t('newPassword')}
+                            title={('newPassword')}
                             type="password"
                             value={form.passwordNew.value}
                             onChangeText={(text) => {
@@ -152,7 +99,7 @@ const ResetPasswordView = ({ route }: any) => {
                         />
                         <Spacer height={20} />
                         <Input
-                            title={t('reNewPassword')}
+                            title={('reNewPassword')}
                             type="password"
                             value={form.reTypePassword.value}
                             onChangeText={(text) => {
@@ -170,7 +117,7 @@ const ResetPasswordView = ({ route }: any) => {
             </KeyboardAwareScrollView>
             <Button
                 isColor
-                title={t('save')}
+                title={('save')}
                 onPress={handlePressResetPassword}
                 containerStyle={{ marginBottom: 10, marginHorizontal: 10 }}
             />

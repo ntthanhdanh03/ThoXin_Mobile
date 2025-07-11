@@ -80,23 +80,23 @@ const LoginView = () => {
         <SafeAreaView style={DefaultStyles.container}>
           
             <ScrollView style={DefaultStyles.wrapBody}>
-                <Spacer height={30} />
+                <Spacer height={100} />
                 <View style={{ alignItems: 'center' }}>
                     <Text style={[DefaultStyles.textRegular14Black, { fontSize: 17 }]}>
-                        {('welcomeBack')}
+                        {('Chào mừng bạn trở lại')}
                     </Text>
                     <Spacer height={6} />
                     <Text
                         style={[DefaultStyles.textRegular16Black, { fontSize: scaleModerate(32) }]}
                     >
-                        {('signInHome')}
+                        {('Đăng nhập')}
                     </Text>
                     <Spacer height={30} />
                 </View>
 
                 <View style={{ paddingHorizontal: scaleModerate(20) }}>
                     <Input
-                        title={('phoneNumber') + '*'}
+                        title={('Số điện thoại') + '*'}
                         keyboardType="phone-pad"
                         value={form.username.value}
                         onChangeText={(text) => {
@@ -110,7 +110,7 @@ const LoginView = () => {
                     />
                     <Spacer height={20} />
                     <Input
-                        title={('password') + '*'}
+                        title={('Mật khẩu') + '*'}
                         type="password"
                         value={form.password.value}
                         onChangeText={(text) => {
@@ -124,29 +124,23 @@ const LoginView = () => {
                     />
                 </View>
                 <Spacer height={20} />
-                <View style={{ alignItems: 'center' }}>
-                    <Text style={[DefaultStyles.textRegular14Black, { textAlign: 'center' }]}>
-                        {('bySignUp')}
-                    </Text>
-                    
-                </View>
-                <Spacer height={20} />
-                <Button isColor title={('signIn')} onPress={handlePressLogin} />
+        
+                <Button isColor title={('Đăng nhập')} onPress={handlePressLogin} />
                 <Spacer height={10} />
                 <Text
                     onPress={handledForgetPassword}
                     style={[styles.signUp, { textAlign: 'center' }]}
                 >
-                    {('forgotPassword')}
+                    {('Quên mật khẩu?')}
                 </Text>
 
                 <Spacer height={300} />
                 <View style={styles.footerContainer}>
                     <Text style={DefaultStyles.textRegular14Black}>
-                        {('dontHaveAccount') + ' '}
+                        {('Bạn chưa có tài khoản?') + ' '}
                     </Text>
                     <Text onPress={handlePressSignUp} style={styles.signUp}>
-                        {('signUp')}
+                        {('Đăng ký')}
                     </Text>
                    
                 </View>
