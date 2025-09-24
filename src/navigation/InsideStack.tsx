@@ -1,30 +1,51 @@
-import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-// import BottomTab from './BottomTab'
-import { scaleModerate } from '../styles/scaleDimensions'
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BottomTab from './BottomTab';
+import RegisterNameView from '../views/auth/RegisterNameView';
+import CreateOderView from '../views/home/CreateOderView';
+import ChoseLocationView from '../views/home/ChoseLocationView';
 
+export type RootStackParamList = {
+  BottomTab: undefined;
+  RegisterNameView: undefined;
+  CreateOderView: undefined;
+  ChoseLocationView: {
+    onSelectAddress: (addr: string, lng: string, lat: string) => void;
+  };
+};
 
-const InStack = createNativeStackNavigator()
+const InStack = createNativeStackNavigator<RootStackParamList>();
+
 const InsideStack = () => {
-    return (
-        <>
-            {/* <InStack.Navigator
-                initialRouteName={
-                   'BottomTab'
-                }
-                screenOptions={{
-                    headerShown: false,
-                }}
-            >
-               <InStack.Screen name="BottomTab" component={BottomTab} />
-             
-            </InStack.Navigator> */}
-           
-           
-        </>
-    )
-}
+  const { data: authData } = useSelector((store: any) => store.auth);
+  const [initialRoute, setInitialRoute] = useState<
+    keyof RootStackParamList | null
+  >(null);
 
-export default InsideStack
+  useEffect(() => {
+    if (authData?.user.fullName && authData?.user.fullName.trim().length > 0) {
+      setInitialRoute('BottomTab');
+    } else {
+      setInitialRoute('RegisterNameView');
+    }
+  }, [authData]);
 
+  if (!initialRoute) return null;
+
+  return (
+    <InStack.Navigator
+      initialRouteName={initialRoute}
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <InStack.Screen name="BottomTab" component={BottomTab} />
+      <InStack.Screen name="RegisterNameView" component={RegisterNameView} />
+      <InStack.Screen name="CreateOderView" component={CreateOderView} />
+      <InStack.Screen name="ChoseLocationView" component={ChoseLocationView} />
+    </InStack.Navigator>
+  );
+};
+
+export default InsideStack;

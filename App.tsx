@@ -1,11 +1,18 @@
-import React, { useEffect } from 'react'
+import React from 'react'
+import { Provider } from 'react-redux'
+import { store } from './src/store/index'
 import RootNavigator from './src/navigation/RootNavigator'
-import { Text } from 'react-native'
-import LoginView from './src/views/auth/LoginView'
+import GlobalModal from './src/views/components/GlobalModal/GlobalModal'
+import { RootSiblingParent } from 'react-native-root-siblings'
 
 function App(): React.JSX.Element {
     return (
-        <RootNavigator />           
+        <Provider store={store}>
+            <RootSiblingParent>
+                <RootNavigator />
+            </RootSiblingParent>
+            <GlobalModal />
+        </Provider>
     )
 }
 

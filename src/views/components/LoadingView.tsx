@@ -4,9 +4,11 @@ import { HEIGHT_SCREEN, WIDTH_SCREEN } from '../../styles/scaleDimensions'
 import { Colors } from '../../styles/Colors'
 
 const LoadingView = ({ loading }: { loading: boolean }) => {
+    if (!loading) return null // tốt hơn display: none
+
     return (
-        <View style={[styles.container, loading ? {} : { display: 'none' }]}>
-            <ActivityIndicator animating color={Colors.black1B} size={'large'} />
+        <View style={styles.overlay}>
+            <ActivityIndicator animating color={Colors.black01} size="large" />
         </View>
     )
 }
@@ -14,12 +16,15 @@ const LoadingView = ({ loading }: { loading: boolean }) => {
 export default LoadingView
 
 const styles = StyleSheet.create({
-    container: {
+    overlay: {
         position: 'absolute',
+        top: 0,
+        left: 0,
         height: HEIGHT_SCREEN,
         width: WIDTH_SCREEN,
-        top: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)', // nền đen mờ mờ
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 1000, // đảm bảo nổi lên trên
     },
 })

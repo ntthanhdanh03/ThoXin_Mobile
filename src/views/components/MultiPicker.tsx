@@ -59,7 +59,7 @@ const MultiPicker = (props: IMultiPicker) => {
         if (text) {
             const result =
                 props?.data?.filter((item) =>
-                    removeAccent(item.name).trim().includes(removeAccent(text).trim())
+                    removeAccent(item.name).trim().includes(removeAccent(text).trim()),
                 ) || []
             setFilterData(result)
         } else {
@@ -89,12 +89,7 @@ const MultiPicker = (props: IMultiPicker) => {
                         />
                     </TouchableOpacity>
                 </View>
-                {props?.hasSearch && (
-                    <>
-                        <Spacer height={10} />
-                        <Input type="search" onChangeText={searchText} />
-                    </>
-                )}
+
                 <Spacer height={16} />
                 <View style={{ borderTopWidth: 1, borderColor: Colors.border01 }}></View>
                 <Spacer height={8} />
@@ -106,7 +101,7 @@ const MultiPicker = (props: IMultiPicker) => {
                                 onPress={() => {
                                     if (selectedItems.find((i: any) => i.key === item.key)) {
                                         setSelectedItems(
-                                            selectedItems.filter((i: any) => i.key !== item.key)
+                                            selectedItems.filter((i: any) => i.key !== item.key),
                                         )
                                         return
                                     }

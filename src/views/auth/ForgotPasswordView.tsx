@@ -1,140 +1,95 @@
-// import {
-//     Keyboard,
-//     ScrollView,
-//     StyleSheet,
-//     Text,
-//     TouchableOpacity,
-//     TouchableWithoutFeedback,
-//     View,
-//     KeyboardAvoidingView,
-//     Platform,
-//     ScrollViewBase,
-// } from 'react-native'
-// import { SafeAreaView } from 'react-native-safe-area-context'
-// import React, { useState } from 'react'
-// import { useDispatch, useSelector } from 'react-redux'
-// import { checkExistedPhoneNumberAction, findInfoByPhoneNumberAction, loginAction } from '../../store/actions/authAction'
-// import Header from '../components/Header'
-// import { useTranslation } from 'react-i18next'
-// import { DefaultStyles } from '../../styles/DefaultStyles'
-// import Spacer from '../components/Spacer'
-// import Input from '../components/Input'
-// import Button from '../components/Button'
-// import { IForm } from '../../interfaces'
-// import { useNavigation } from '@react-navigation/native'
-// import { defaultField, getFormValues } from '../../utils/formUtils'
-// import LanguageView from '../components/LanguageView'
-// import GlobalModalController from '../components/GlobalModal/GlobalModalController'
-// import LoadingView from '../components/LoadingView'
-// import { Colors } from '../../styles/Colors'
-// import { scaleModerate } from '../../styles/scaleDimensions'
-// import FastImage from 'react-native-fast-image'
-// import { ic_home } from '../../assets'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useState } from 'react'
+import { DefaultStyles } from '../../styles/DefaultStyles'
+import Spacer from '../components/Spacer'
+import Button from '../components/Button'
+import { useNavigation } from '@react-navigation/native'
+import { Colors } from '../../styles/Colors'
+import { scaleModerate } from '../../styles/scaleDimensions'
+import { OtpInput } from 'react-native-otp-entry'
+import Header from '../components/Header'
 
-// const ForgotPasswordView = () => {
-//     const { t } = useTranslation()
-//     const navigation = useNavigation()
-//     const [form, setForm] = useState<IForm>({
-//         username: defaultField,
-//         password: defaultField,
-//     })
-//     const [loading, setLoading] = useState(false)
-//     const dispatch = useDispatch()
+const ForgotPasswordView = () => {
+    const navigation = useNavigation()
+    const handleCheckPhoneNumber = () => {
+        navigation.navigate('ResetPasswordView' as never)
+    }
+    return (
+        <SafeAreaView style={DefaultStyles.container}>
+            <Header isBack />
+            <View style={[DefaultStyles.wrapBody, { flex: 1 }]}>
+                <Text style={[DefaultStyles.textBold22Black, { fontSize: 26 }]}>
+                    {'Nhập mã xác thực'}
+                </Text>
+                <Spacer height={8} />
+                <Text style={[DefaultStyles.textBold14Black]}>
+                    {'Mã xác thực sẽ được gửi dến số'}
+                </Text>
+                <View style={{ flexDirection: 'row', width: '80%' }}>
+                    <Text style={[DefaultStyles.textBold14Black]}>
+                        {'+840795528073'}
+                        <Text style={[DefaultStyles.textRegular14Black]}>
+                            {'Vui lòng kiểm tra tin nhắn và nhập mã xác thực vào đây'}
+                        </Text>
+                    </Text>
+                </View>
+                <Spacer height={16} />
+                <View style={{ paddingRight: scaleModerate(40) }}>
+                    <OtpInput
+                        autoFocus
+                        numberOfDigits={6}
+                        // ref={otpRef}
+                        // onTextChange={(text) => setOtp(text)}
+                        theme={{
+                            focusStickStyle: {
+                                backgroundColor: Colors.primary,
+                            },
+                            focusedPinCodeContainerStyle: {
+                                borderColor: Colors.primary,
+                                borderWidth: 1,
+                            },
+                            filledPinCodeContainerStyle: {
+                                borderColor: Colors.green34,
+                                borderWidth: 1,
+                            },
+                            pinCodeTextStyle: {
+                                ...DefaultStyles.textRegular16Black,
+                                fontSize: 32,
+                            },
+                            pinCodeContainerStyle: {
+                                height: scaleModerate(42),
+                                width: scaleModerate(42),
+                            },
+                        }}
+                    />
+                </View>
+                <Spacer height={20} />
+                <Text style={[DefaultStyles.textBold14Black, { color: Colors.blue11 }]}>
+                    {'Gửi lại mã xác thực'}
+                </Text>
+            </View>
+            <View style={{ marginHorizontal: scaleModerate(16) }}>
+                <Spacer height={16} />
+                <Button isColor title={'Xác nhận'} onPress={handleCheckPhoneNumber} />
+                <Spacer height={20} />
+            </View>
+        </SafeAreaView>
+    )
+}
 
-//     const isValidData = () => {
-//         let isValid = true
-//         let usernameCheck = { error: false, message: '' }
+export default ForgotPasswordView
 
-//         if (!form.username.value) {
-//             usernameCheck = { error: true, message: '' }
-//             isValid = false
-//         }
-
-//         if (!isValid) {
-//             setForm({
-//                 username: { ...form.username, error: usernameCheck.error },
-//             })
-//         }
-//         return isValid
-//     }
-
-//     const handlePressCheckOTP = () => {
-//         if (isValidData()) {
-//             const forgetPassword = {
-//                 phone: form?.username?.value,
-//             }
-//             dispatch(
-//                 findInfoByPhoneNumberAction(forgetPassword, (data: any, error: any) => {
-//                     if (data) {
-//                         setLoading(false)
-//                         console.log("datadatadata" , data)
-//                         const infoChangePassword = data
-//                         navigation.navigate(
-//                             ...(['OtpVerificationView', { infoChangePassword }] as never)
-//                         )
-//                     } else {
-//                         GlobalModalController.showModal({
-//                             title: t('Không tìm thấy số tồn tại'),
-//                             icon: 'fail',
-//                         })
-//                     }
-//                 })
-//             )
-//         }
-//     }
-//     return (
-//         <SafeAreaView style={DefaultStyles.container}>
-//             <Header isBack={true} title={''} />
-//             <ScrollView style={DefaultStyles.wrapBody}>
-//                 <Spacer height={20} />
-//                 <Text style={[DefaultStyles.textBold16Black, { fontSize: scaleModerate(25) }]}>
-//                     {t('Quên mật khẩu')}
-//                 </Text>
-//                 <Text style={[DefaultStyles.textRegular14Black]}>
-//                     {t('Nhập số di động của bạn')}
-//                 </Text>
-//                 <Spacer height={20} />
-
-//                 <Input
-//                     title={t('phoneNumber') + '*'}
-//                     keyboardType="phone-pad"
-//                     value={form.username.value}
-//                     onChangeText={(text) => {
-//                         setForm({
-//                             ...form,
-//                             username: { value: text, error: false, message: '' },
-//                         })
-//                     }}
-//                     error={form.username.error}
-//                     message={form.username.message}
-//                 />
-//                 <Spacer height={5} />
-//                 <Text style={[DefaultStyles.textRegular12Gray, { textAlign: 'center' }]}>
-//                     {t('automaticallyMessages')}
-//                 </Text>
-//                 <Spacer height={20} />
-
-//                 <Button isColor title={t('Tiếp tục')} onPress={handlePressCheckOTP} />
-
-//                 <Spacer height={300} />
-//             </ScrollView>
-//             <LoadingView loading={loading} />
-//         </SafeAreaView>
-//     )
-// }
-
-// export default ForgotPasswordView
-
-// const styles = StyleSheet.create({
-//     signUp: {
-//         ...DefaultStyles.textRegular16Black,
-//         color: Colors.primary300,
-//     },
-//     footerContainer: {
-//         position: 'absolute',
-//         bottom: 0,
-//         left: 0,
-//         right: 0,
-//         alignItems: 'center',
-//     },
-// })
+const styles = StyleSheet.create({
+    signUp: {
+        ...DefaultStyles.textRegular16Black,
+        color: Colors.primary300,
+    },
+    footerContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
+})

@@ -18,7 +18,7 @@ const StarsView = ({ number = 0, type = 'view', onChange }: IStar) => {
                       if (i <= number) {
                           return <FastImage source={ic_star_yellow} style={styles.icon} key={i} />
                       }
-                        return <FastImage source={ic_star} style={styles.icon} key={i} />
+                      return <FastImage source={ic_star} style={styles.icon} key={i} />
                   })
                 : [1, 2, 3, 4, 5]?.map((i) => {
                       if (i <= selectedStars) {

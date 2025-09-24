@@ -29,7 +29,7 @@ const getIcon = (icon: string) => {
 }
 const GlobalModal = () => {
     const [modalVisible, setModalVisible] = useState(false)
-    const modalRef = useRef<GlobalModalRef>()
+    const modalRef = useRef<GlobalModalRef>(null)
     const [data, setData] = useState<any>(null)
     const { t } = useTranslation()
 
@@ -48,7 +48,7 @@ const GlobalModal = () => {
                 setModalVisible(false)
             },
         }),
-        []
+        [],
     )
 
     return (

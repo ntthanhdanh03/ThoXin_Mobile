@@ -1,21 +1,26 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
-import { scaleModerate } from '../../styles/scaleDimensions';
-import { Colors } from '../../styles/Colors';
+import React from 'react'
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native'
+import Modal from 'react-native-modal'
+import { scaleModerate } from '../../styles/scaleDimensions'
+import { Colors } from '../../styles/Colors'
 
 interface GenericModalProps {
-    visible: boolean;
-    onClose: () => void;
-    children: React.ReactNode;
-    height?: number; 
+    visible: boolean
+    onClose: () => void
+    children: React.ReactNode
+    height?: number
 }
 
-const GenericModal: React.FC<GenericModalProps> = ({ visible, onClose, children, height = 0.7 }) => {
+const GenericModal: React.FC<GenericModalProps> = ({
+    visible,
+    onClose,
+    children,
+    height = 0.7,
+}) => {
     return (
-        <Modal 
-            isVisible={visible} 
-            onBackdropPress={onClose} 
+        <Modal
+            isVisible={visible}
+            onBackdropPress={onClose}
             style={styles.modal}
             backdropOpacity={0.5}
         >
@@ -23,14 +28,14 @@ const GenericModal: React.FC<GenericModalProps> = ({ visible, onClose, children,
                 <View style={styles.body}>{children}</View>
             </View>
         </Modal>
-    );
-};
+    )
+}
 
-export default GenericModal;
+export default GenericModal
 
 const styles = StyleSheet.create({
     modal: {
-        margin: 0, 
+        margin: 0,
         justifyContent: 'flex-end',
     },
     bottomSheet: {
@@ -43,4 +48,4 @@ const styles = StyleSheet.create({
     body: {
         flex: 1,
     },
-});
+})

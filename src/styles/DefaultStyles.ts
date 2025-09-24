@@ -15,7 +15,6 @@ export const DefaultStyles = StyleSheet.create({
     },
     //TEXT
     textBold24Black: {
-        //Screen title
         ...Fonts.Bold,
         color: Colors.black1B,
         fontSize: 24,
@@ -31,7 +30,6 @@ export const DefaultStyles = StyleSheet.create({
         fontSize: 20,
     },
     textBold20Black: {
-        //Button
         ...Fonts.Bold,
         color: Colors.black1B,
         fontSize: 20,
@@ -47,7 +45,6 @@ export const DefaultStyles = StyleSheet.create({
         fontSize: 18,
     },
     textBold18Black: {
-        //Button
         ...Fonts.Bold,
         color: Colors.black1B,
         fontSize: 18,
@@ -90,9 +87,19 @@ export const DefaultStyles = StyleSheet.create({
         color: Colors.black1B,
         fontSize: 14,
     },
+    textBold14BWhite: {
+        ...Fonts.Bold,
+        color: Colors.whiteFF,
+        fontSize: 14,
+    },
     textMedium14White: {
         ...Fonts.Medium,
         color: Colors.whiteFF,
+        fontSize: 14,
+    },
+    textMedium14Black: {
+        ...Fonts.Medium,
+        color: Colors.black01,
         fontSize: 14,
     },
     textRegular14Black: {
@@ -105,7 +112,6 @@ export const DefaultStyles = StyleSheet.create({
         color: Colors.whiteFF,
         fontSize: 14,
     },
-
     textRegular14Gray: {
         ...Fonts.Regular,
         color: Colors.gray72,

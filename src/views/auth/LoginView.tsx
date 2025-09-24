@@ -1,167 +1,100 @@
-import {
-    Keyboard,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollViewBase,
-} from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState } from 'react'
-import Header from '../components/Header'
-import { useTranslation } from 'react-i18next'
 import { DefaultStyles } from '../../styles/DefaultStyles'
 import Spacer from '../components/Spacer'
-import Input from '../components/Input'
 import Button from '../components/Button'
-import { IForm } from '../../interfaces'
 import { useNavigation } from '@react-navigation/native'
-import { defaultField, getFormValues } from '../../utils/formUtils'
-import LanguageView from '../components/LanguageView'
-import GlobalModalController from '../components/GlobalModal/GlobalModalController'
-import LoadingView from '../components/LoadingView'
 import { Colors } from '../../styles/Colors'
 import { scaleModerate } from '../../styles/scaleDimensions'
-import FastImage from 'react-native-fast-image'
-import { ic_home } from '../../assets'
+import { TextInput } from 'react-native-paper'
+import { ic_balence, ic_calendar } from '../../assets'
+import { useDispatch } from 'react-redux'
+import { checkPhoneExistAction } from '../../store/actions/authAction'
+import LoadingView from '../components/LoadingView'
 
 const LoginView = () => {
+    const navigation = useNavigation()
+    const dispatch = useDispatch()
+    const [phoneNumber, setPhoneNumber] = useState<string | undefined>()
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
-      const navigation = useNavigation()
-    const [form, setForm] = useState<IForm>({
-        username: defaultField,
-        password: defaultField,
-    })
-    const [loading, setLoading] = useState(false)
-  
-
-    const isValidData = () => {
-        let isValid = true
-        let usernameCheck = { error: false, message: '' }
-        let passwordCheck = { error: false, message: '' }
-        if (!form.username.value) {
-            usernameCheck = { error: true, message: '' }
-            isValid = false
+    const handleCheckPhoneNumber = () => {
+        setIsLoading(true)
+        const postData = {
+            phoneNumber: phoneNumber,
+            role: 'client',
         }
-        if (!form.password.value) {
-            passwordCheck = { error: true, message: '' }
-            isValid = false
-        }
-        if (!isValid) {
-            setForm({
-                username: { ...form.username, error: usernameCheck.error },
-                password: { ...form.password, error: passwordCheck.error },
-            })
-        }
-        return isValid
-    }
-
-    const handlePressLogin = () => {
-        if (isValidData()) {
-            setLoading(true)
-            const data = getFormValues(form)
-         
-        }
-    }
-
-    const handlePressSignUp = () => {
-      navigation.navigate('RegisterView' as never)
-    }
-
-    const handledForgetPassword = () => {
-        
+        dispatch(
+            checkPhoneExistAction(postData, (data: any, error: any) => {
+                if (data === true) {
+                    setIsLoading(false)
+                    navigation.navigate(...(['LoginViewPW', { phoneNumber }] as never))
+                } else {
+                    setIsLoading(false)
+                    navigation.navigate(...(['RegisterOTPView', { phoneNumber }] as never))
+                }
+            }),
+        )
     }
 
     return (
         <SafeAreaView style={DefaultStyles.container}>
-          
-            <ScrollView style={DefaultStyles.wrapBody}>
-                <Spacer height={100} />
-                <View style={{ alignItems: 'center' }}>
-                    <Text style={[DefaultStyles.textRegular14Black, { fontSize: 17 }]}>
-                        {('Chào mừng bạn trở lại')}
-                    </Text>
-                    <Spacer height={6} />
-                    <Text
-                        style={[DefaultStyles.textRegular16Black, { fontSize: scaleModerate(32) }]}
-                    >
-                        {('Đăng nhập')}
-                    </Text>
-                    <Spacer height={30} />
-                </View>
-
-                <View style={{ paddingHorizontal: scaleModerate(20) }}>
-                    <Input
-                        title={('Số điện thoại') + '*'}
-                        keyboardType="phone-pad"
-                        value={form.username.value}
-                        onChangeText={(text) => {
-                            setForm({
-                                ...form,
-                                username: { value: text, error: false, message: '' },
-                            })
-                        }}
-                        error={form.username.error}
-                        message={form.username.message}
-                    />
-                    <Spacer height={20} />
-                    <Input
-                        title={('Mật khẩu') + '*'}
-                        type="password"
-                        value={form.password.value}
-                        onChangeText={(text) => {
-                            setForm({
-                                ...form,
-                                password: { value: text, error: false, message: '' },
-                            })
-                        }}
-                        error={form.password.error}
-                        message={form.password.message}
-                    />
-                </View>
-                <Spacer height={20} />
-        
-                <Button isColor title={('Đăng nhập')} onPress={handlePressLogin} />
-                <Spacer height={10} />
-                <Text
-                    onPress={handledForgetPassword}
-                    style={[styles.signUp, { textAlign: 'center' }]}
+            <View style={[DefaultStyles.wrapBody, { flex: 1 }]}>
+                <Spacer height={30} />
+                <View
+                    style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
                 >
-                    {('Quên mật khẩu?')}
-                </Text>
-
-                <Spacer height={300} />
-                <View style={styles.footerContainer}>
-                    <Text style={DefaultStyles.textRegular14Black}>
-                        {('Bạn chưa có tài khoản?') + ' '}
+                    <Text style={[DefaultStyles.textRegular16Black]}>
+                        {'Bắt đầu trải nghiệm với'}
                     </Text>
-                    <Text onPress={handlePressSignUp} style={styles.signUp}>
-                        {('Đăng ký')}
-                    </Text>
-                   
+                    <Text style={[DefaultStyles.textBold14Black]}>{' Thợ Xịn'}</Text>
                 </View>
-            </ScrollView>
-            <LoadingView loading={loading} />
+                <Spacer height={16} />
+                <View>
+                    <TextInput
+                        mode="outlined"
+                        label="Số điện thoại"
+                        keyboardType="phone-pad"
+                        value={phoneNumber}
+                        onChangeText={(text) => {
+                            setPhoneNumber(text)
+                        }}
+                        outlineColor={Colors.gray69}
+                        activeOutlineColor={Colors.blue11}
+                        textColor={Colors.black01}
+                        style={{ fontSize: scaleModerate(14) }}
+                        theme={{
+                            roundness: 12,
+                            colors: {
+                                onSurfaceVariant: Colors.gray44,
+                            },
+                        }}
+                        left={<TextInput.Icon icon={ic_balence} size={30} />}
+                        right={
+                            <TextInput.Icon
+                                icon={ic_calendar}
+                                onPress={() => console.log('Icon pressed')}
+                            />
+                        }
+                    />
+                </View>
+                <Spacer height={30} />
+            </View>
+            <View style={{ marginHorizontal: scaleModerate(16) }}>
+                <Text style={DefaultStyles.textRegular14Black}>
+                    Bằng việc nhấn vào <Text style={{ fontWeight: 'bold' }}>Tiếp tục</Text>. Bạn
+                    đồng ý với quy chế của Thợ Xịn và Thợ Xịn sẽ được xử lí dữ liệu cá nhân của mình
+                </Text>
+                <Spacer height={16} />
+                <Button isColor title={'Tiếp tục'} onPress={handleCheckPhoneNumber} />
+                <Spacer height={20} />
+            </View>
+            <LoadingView loading={isLoading} />
         </SafeAreaView>
     )
 }
 
 export default LoginView
 
-const styles = StyleSheet.create({
-    signUp: {
-        ...DefaultStyles.textRegular16Black,
-        color: Colors.primary300,
-    },
-    footerContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-    },
-})
+const styles = StyleSheet.create({})

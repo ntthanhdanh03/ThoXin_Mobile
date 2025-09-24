@@ -1,12 +1,11 @@
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native'
 import React, { useCallback } from 'react'
 import FastImage from 'react-native-fast-image'
-import { ic_chevron_left, ic_search } from '../../assets'
+import { ic_chevron_left } from '../../assets'
 import { scaleModerate } from '../../styles/scaleDimensions'
 import { useNavigation } from '@react-navigation/native'
 import { Colors } from '../../styles/Colors'
 import Input from './Input'
-import { debounce } from 'lodash'
 
 interface IHeader {
     title?: string
@@ -31,12 +30,12 @@ const Header = (props: IHeader) => {
         }
     }
 
-    const pushChange = useCallback(
-        debounce((text: string) => {
-            props?.onSearchChange && props?.onSearchChange(text)
-        }, 500),
-        []
-    )
+    // const pushChange = useCallback(
+    //     debounce((text: string) => {
+    //         props?.onSearchChange && props?.onSearchChange(text)
+    //     }, 500),
+    //     [],
+    // )
 
     return (
         <View>
@@ -44,9 +43,11 @@ const Header = (props: IHeader) => {
                 style={[
                     styles.container,
                     {
-                        paddingLeft: props?.isBack ? scaleModerate(10) : scaleModerate(14),
+                        paddingLeft: props?.isBack ? scaleModerate(0) : scaleModerate(14),
                         paddingBottom: props?.isBack ? 0 : scaleModerate(12),
                         paddingTop: props?.isBack ? 0 : scaleModerate(12),
+                        borderBottomWidth: 1,
+                        borderBottomColor: Colors.border01,
                     },
                     props?.containerStyle,
                 ]}
@@ -75,28 +76,9 @@ const Header = (props: IHeader) => {
                             }
                             setShowSearch(!showSearch)
                         }}
-                    >
-                        <FastImage
-                            source={ic_search}
-                            style={{
-                                width: scaleModerate(22),
-                                height: scaleModerate(22),
-                                marginRight: scaleModerate(5),
-                            }}
-                        />
-                    </TouchableOpacity>
+                    ></TouchableOpacity>
                 )}
             </View>
-            {showSearch && (
-                <Input
-                    type="search"
-                    placeholder={props?.searchPlaceholder}
-                    onChangeText={(text: string) => {
-                        props?.onSearchChange && props?.onSearchChange(text)
-                    }}
-                    containerStyle={{ marginHorizontal: scaleModerate(20) }}
-                />
-            )}
         </View>
     )
 }
@@ -112,12 +94,12 @@ const styles = StyleSheet.create({
     text: {
         flex: 1,
         marginLeft: scaleModerate(6),
-        fontSize: scaleModerate(16),
+        fontSize: scaleModerate(18),
         fontWeight: 'bold',
         color: Colors.primary,
     },
     iconBack: {
-        height: scaleModerate(24),
-        width: scaleModerate(24),
+        height: scaleModerate(26),
+        width: scaleModerate(26),
     },
 })

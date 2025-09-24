@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
         borderColor: Colors.border01,
     },
     backButton: {
-        
         // padding: scaleModerate(10),
     },
     titleContainer: {

@@ -9,7 +9,7 @@ export const getImagePermissionAndroid = async () => {
                 message: 'Your permission is required to save images to your device',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'OK',
-            }
+            },
         )
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             return true
@@ -18,14 +18,14 @@ export const getImagePermissionAndroid = async () => {
             'Save remote Image',
             'Grant Me Permission to save Image',
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-            { cancelable: false }
+            { cancelable: false },
         )
     } catch (err: any) {
         Alert.alert(
             'Save remote Image',
             'Failed to save Image: ' + err?.message,
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-            { cancelable: false }
+            { cancelable: false },
         )
     }
 }

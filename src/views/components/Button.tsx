@@ -73,8 +73,8 @@ const Button = (props: IButton) => {
                             <Text
                                 style={[
                                     props?.isColor
-                                        ? DefaultStyles.textRegular14White
-                                        : DefaultStyles.textRegular14White,
+                                        ? DefaultStyles.textBold14BWhite
+                                        : DefaultStyles.textBold14BWhite,
                                     props?.disable === true && { color: Colors.whiteFF },
                                 ]}
                             >
@@ -93,7 +93,7 @@ export default Button
 const styles = StyleSheet.create({
     wrapButton: {
         flexDirection: 'row',
-        height: scaleModerate(40),
+        height: scaleModerate(46),
         borderRadius: scaleModerate(8),
         alignItems: 'center',
         justifyContent: 'center',

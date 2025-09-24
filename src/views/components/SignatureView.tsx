@@ -31,7 +31,7 @@ const SignatureView = React.forwardRef((props: ISignatureView, ref: any) => {
                 })
             },
         }),
-        [signature]
+        [signature],
     )
 
     return (
