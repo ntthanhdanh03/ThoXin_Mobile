@@ -12,3 +12,6 @@ export const DELETE_INSTALLATION = 'DELETE_INSTALLATION';
 
 export const REFRESH_TOKEN = 'REFRESH_TOKEN';
 export const UPDATE_USER = 'UPDATE_USER';
+
+export const CREATE_ORDER = 'CREATE_ORDER';
+export const GET_ORDER = 'GET_ORDER';

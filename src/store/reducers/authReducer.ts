@@ -44,7 +44,10 @@ const authReducer = (state = initialState, action: IAction) => {
         ...state,
         data: {
           ...state?.data,
-          user: { ...state?.data?.user, ...action.payload },
+          user: {
+            ...state?.data?.user,
+            deviceToken: action.payload,
+          },
         },
         loading: false,
       };

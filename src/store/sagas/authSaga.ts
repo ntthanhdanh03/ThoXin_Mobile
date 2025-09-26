@@ -88,16 +88,12 @@ function* createInstallationSaga({
   callback,
 }: ReturnType<typeof actions.createInstallationAction>) {
   try {
-    const API = `/setting/installations/createInstallation`;
-    const response: IResponse = yield call(() => api.post(API, payload));
-    console.log('***createInstallationSaga', API, payload, response);
+    const API = `/auth/installations`;
+    const response: IResponse = yield call(() => api.put(API, payload));
+    console.log('***createInstallationSagaPayload', payload);
     if (response && response?.status === 200 && response?.data) {
-      yield put(
-        actions.createInstallationSuccessAction({
-          installationId: response?.data?.id,
-          deviceToken: response?.data?.deviceToken,
-        }),
-      );
+      console.log('***createInstallationSagaResponse', response?.data);
+      yield put(actions.createInstallationSuccessAction(payload.deviceToken));
       callback && callback(response?.data, null);
     } else {
       callback && callback(null, 'failure');
@@ -113,10 +109,10 @@ function* deleteInstallationSaga({
   callback,
 }: ReturnType<typeof actions.deleteInstallationAction>) {
   try {
-    const API = `/api/installations/${payload?.installationId}`;
-
+    const API = `/auth/installations/${payload.userId}/${encodeURIComponent(payload.token)}`;
     const response: IResponse = yield call(() => api.delete(API));
     console.log('***deleteInstallationSaga', API, payload, response);
+
     if (response && response?.status === 200 && response?.data) {
       callback && callback(response?.data, null);
     } else {

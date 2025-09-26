@@ -28,7 +28,7 @@ export const uploadKycPhoto = async (
     } as any);
 
     const response = await fetch(
-      `http://192.168.1.2:3000/users/upload-kyc/${field}`,
+      `http://192.168.1.6:3000/users/upload-kyc/${field}`,
       {
         method: 'POST',
         body: formData,

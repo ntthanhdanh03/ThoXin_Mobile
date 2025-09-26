@@ -1,4 +1,4 @@
-import { AppState, StyleSheet } from 'react-native';
+import { AppState, DeviceEventEmitter, StyleSheet } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -6,6 +6,10 @@ import OutsideStack from './OutsideStack';
 import { navigationRef } from './NavigationService';
 import InsideStack from './InsideStack';
 import { useDispatch, useSelector } from 'react-redux';
+import {
+  FirebaseMessagingTypes,
+  getMessaging,
+} from '@react-native-firebase/messaging';
 import {
   createInstallationAction,
   refreshTokenAction,
@@ -15,6 +19,9 @@ import {
   initNotificationConfig,
 } from '../utils/notificationUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getOrderAction } from '../store/actions/orderAction';
+import SocketUtil from '../utils/socketUtil';
+import NotificationModal from './NotificationModal';
 
 const Stack = createNativeStackNavigator();
 const RootNavigator = () => {
@@ -22,6 +29,13 @@ const RootNavigator = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { data: authData } = useSelector((store: any) => store.auth);
   const [prevUserState, setPrevUserState] = useState<any>(null);
+  const [notif, setNotif] = useState<{
+    title?: string;
+    message?: string;
+    visible: boolean;
+  }>({
+    visible: false,
+  });
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -48,15 +62,42 @@ const RootNavigator = () => {
   }, []);
 
   useEffect(() => {
+    const events = [
+      { name: 'connect', handler: () => console.log('CONNECT') },
+      { name: 'disconnect', handler: () => console.log('DISCONNECT') },
+      {
+        name: 'order_addApplicant',
+        handler: () => console.log('order_addApplicant'),
+      },
+    ];
+    const subscriptions = events.map(e =>
+      DeviceEventEmitter.addListener(e.name, e.handler),
+    );
+
+    return () => {
+      subscriptions.forEach(sub => sub.remove());
+    };
+  }, []);
+
+  useEffect(() => {
     if (authData) {
       if (prevUserState === null) {
         initNotificationConfig((installationData: any) => {
           handleCreateInstallation(authData, installationData);
-          // SocketUtil.connect(authData?.user?._id)
-          // return () => {
-          //     SocketUtil.disconnect()
-          // }
+          SocketUtil.connect(authData?.user?._id, 'client');
+          const unsubscribe = getMessaging().onMessage(
+            (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+              console.log('Foreground notification:', remoteMessage);
+              setNotif({
+                visible: true,
+                title: remoteMessage.notification?.title,
+                message: remoteMessage.notification?.body,
+              });
+            },
+          );
         });
+
+        dispatch(getOrderAction({}));
       }
     }
     setPrevUserState(authData);
@@ -101,6 +142,12 @@ const RootNavigator = () => {
           </>
         </Stack.Navigator>
       </NavigationContainer>
+      <NotificationModal
+        visible={notif.visible}
+        title={notif.title}
+        message={notif.message}
+        onHide={() => setNotif({ ...notif, visible: false })}
+      />
     </>
   );
 };

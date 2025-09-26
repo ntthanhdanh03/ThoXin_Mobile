@@ -32,6 +32,7 @@ import {
   LOCKSMITH,
 } from '../../constants/Constants';
 import { uploadKycPhoto } from '../../services/uploadKycPhoto ';
+import { createOrderAction } from '../../store/actions/orderAction';
 
 type RawService = {
   key: string;
@@ -113,6 +114,13 @@ const CreateOrderView = () => {
       rangePrice: choseService?.rangePrice,
     };
     console.log(dataOrder);
+    dispatch(
+      createOrderAction({ dataOrder }, (data: any, e: any) => {
+        if (data) {
+          console.log('dataaaaaaaaaaaaaaaaaaaa', data);
+        }
+      }),
+    );
   };
 
   const isDisabled =
