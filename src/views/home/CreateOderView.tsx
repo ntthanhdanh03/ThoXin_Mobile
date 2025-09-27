@@ -32,7 +32,11 @@ import {
   LOCKSMITH,
 } from '../../constants/Constants';
 import { uploadKycPhoto } from '../../services/uploadKycPhoto ';
-import { createOrderAction } from '../../store/actions/orderAction';
+import {
+  createOrderAction,
+  getOrderAction,
+} from '../../store/actions/orderAction';
+import GlobalModalController from '../components/GlobalModal/GlobalModalController';
 
 type RawService = {
   key: string;
@@ -117,7 +121,25 @@ const CreateOrderView = () => {
     dispatch(
       createOrderAction({ dataOrder }, (data: any, e: any) => {
         if (data) {
-          console.log('dataaaaaaaaaaaaaaaaaaaa', data);
+          GlobalModalController.showModal({
+            title: 'Đã gửi thông báo tới Thợ',
+            description: 'Vui lòng kiểm tra thông tin ở phần hoạt động',
+            icon: 'success',
+          });
+          dispatch(
+            getOrderAction({}, (data: any) => {
+              if (data) {
+                navigation.goBack();
+              }
+            }),
+          );
+        } else {
+          GlobalModalController.showModal({
+            title: 'Tạo yêu cầu thất bại',
+            description: e,
+            icon: 'fail',
+          });
+          navigation.goBack();
         }
       }),
     );

@@ -10,7 +10,7 @@ export default class SocketUtil {
       this.socket.disconnect();
     }
 
-    const socketUrl = 'http://192.168.1.6:3000';
+    const socketUrl = 'http://192.168.1.4:3000';
     this.socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       forceNew: true,
@@ -20,6 +20,23 @@ export default class SocketUtil {
     });
     this.socket.on('connect', () => DeviceEventEmitter.emit('connect'));
     this.socket.on('disconnect', () => DeviceEventEmitter.emit('disconnect'));
+    this.socket.on('order_addApplicant', data => {
+      DeviceEventEmitter.emit('order_addApplicant', data);
+    });
+    this.socket.on(
+      'chat.newMessage',
+      (payload: { orderId: string; roomId: string }) => {
+        const { orderId, roomId } = payload;
+        console.log(
+          '📨 Nhận chat.newMessage với orderId , roomId:',
+          orderId,
+          roomId,
+        );
+
+        // Emit lại nội bộ (optional)
+        DeviceEventEmitter.emit('chat.newMessage', { orderId });
+      },
+    );
   }
 
   static on(event: string, callback: (data: any) => void) {

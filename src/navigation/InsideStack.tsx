@@ -5,6 +5,8 @@ import BottomTab from './BottomTab';
 import RegisterNameView from '../views/auth/RegisterNameView';
 import CreateOderView from '../views/home/CreateOderView';
 import ChoseLocationView from '../views/home/ChoseLocationView';
+import DetailActivityView from '../views/activity/DetailActivityView';
+import ChatViewVer2 from '../views/chat/ChatViewVer2';
 
 export type RootStackParamList = {
   BottomTab: undefined;
@@ -13,6 +15,8 @@ export type RootStackParamList = {
   ChoseLocationView: {
     onSelectAddress: (addr: string, lng: string, lat: string) => void;
   };
+  DetailActivityView: { item: any };
+  ChatViewVer2: { dataRoomChat: any };
 };
 
 const InStack = createNativeStackNavigator<RootStackParamList>();
@@ -44,6 +48,11 @@ const InsideStack = () => {
       <InStack.Screen name="RegisterNameView" component={RegisterNameView} />
       <InStack.Screen name="CreateOderView" component={CreateOderView} />
       <InStack.Screen name="ChoseLocationView" component={ChoseLocationView} />
+      <InStack.Screen
+        name="DetailActivityView"
+        component={DetailActivityView}
+      />
+      <InStack.Screen name="ChatViewVer2" component={ChatViewVer2} />
     </InStack.Navigator>
   );
 };

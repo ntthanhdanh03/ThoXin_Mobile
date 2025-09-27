@@ -22,12 +22,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOrderAction } from '../store/actions/orderAction';
 import SocketUtil from '../utils/socketUtil';
 import NotificationModal from './NotificationModal';
+import {
+  getChatRoomByOrderAction,
+  getMessageAction,
+} from '../store/actions/chatAction';
 
 const Stack = createNativeStackNavigator();
 const RootNavigator = () => {
   const dispatch = useDispatch();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { data: authData } = useSelector((store: any) => store.auth);
+  const { data: orderData } = useSelector((store: any) => store.order);
   const [prevUserState, setPrevUserState] = useState<any>(null);
   const [notif, setNotif] = useState<{
     title?: string;
@@ -61,13 +66,42 @@ const RootNavigator = () => {
     bootstrap();
   }, []);
 
+  const handleOrder = () => {
+    dispatch(
+      getOrderAction({}, (data: any, e: any) => {
+        if (data) {
+          const pendingOrder = data.find(
+            (order: any) => order.status === 'pending',
+          );
+
+          if (pendingOrder) {
+            const orderId = pendingOrder._id;
+            dispatch(getChatRoomByOrderAction({ _orderId: orderId }));
+            dispatch(
+              getMessageAction({ _orderId: orderId }, (data: any) => {}),
+            );
+          } else {
+          }
+        }
+      }),
+    );
+  };
+
   useEffect(() => {
     const events = [
       { name: 'connect', handler: () => console.log('CONNECT') },
       { name: 'disconnect', handler: () => console.log('DISCONNECT') },
       {
         name: 'order_addApplicant',
-        handler: () => console.log('order_addApplicant'),
+        handler: () => handleOrder(),
+      },
+      {
+        name: 'chat.newMessage',
+        handler: (event: { orderId: string; roomId: string }) => {
+          console.log('💬 Chat mới cho đơn hàng:', event.orderId);
+          console.log('💬 Chat mới cho phòng:', event.roomId);
+          dispatch(getMessageAction({ _orderId: event.orderId }));
+        },
       },
     ];
     const subscriptions = events.map(e =>
@@ -96,8 +130,7 @@ const RootNavigator = () => {
             },
           );
         });
-
-        dispatch(getOrderAction({}));
+        handleOrder();
       }
     }
     setPrevUserState(authData);

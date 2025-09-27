@@ -47,15 +47,21 @@ function* createOrderSaga({
       api.post(API, payload.dataOrder),
     );
     console.log('***createOrderSaga', response);
+
     if (response && [200, 201].includes(response.status) && response.data) {
       yield put(actions.createOrderSuccessAction(response?.data));
       callback && callback(response?.data, null);
     } else {
-      callback && callback(null, 'failure');
+      const message =
+        response?.data?.message || 'Tạo đơn hàng thất bại, vui lòng thử lại.';
+      callback && callback(null, message);
     }
   } catch (e: any) {
     console.log('createOrderSaga', e, e?.response);
-    callback && callback(null, 'failure');
+
+    const errorMessage =
+      e?.response?.data?.message || 'Đã có lỗi xảy ra khi tạo đơn hàng.';
+    callback && callback(null, errorMessage);
   }
 }
 

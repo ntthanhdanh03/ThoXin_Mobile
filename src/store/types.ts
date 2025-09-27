@@ -15,3 +15,7 @@ export const UPDATE_USER = 'UPDATE_USER';
 
 export const CREATE_ORDER = 'CREATE_ORDER';
 export const GET_ORDER = 'GET_ORDER';
+
+export const GET_CHAT_BY_ORDER = 'GET_CHAT_BY_ORDER';
+export const GET_MESSAGE = 'GET_MESSAGE';
+export const SEND_MESSAGE = 'SEND_MESSAGE';
