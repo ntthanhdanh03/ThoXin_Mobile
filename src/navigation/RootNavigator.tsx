@@ -26,6 +26,8 @@ import {
   getChatRoomByOrderAction,
   getMessageAction,
 } from '../store/actions/chatAction';
+import { getAppointmentAction } from '../store/actions/appointmentAction';
+import { getLocationPartnerAction } from '../store/actions/locationAction';
 
 const Stack = createNativeStackNavigator();
 const RootNavigator = () => {
@@ -68,7 +70,7 @@ const RootNavigator = () => {
 
   const handleOrder = () => {
     dispatch(
-      getOrderAction({}, (data: any, e: any) => {
+      getOrderAction({ clientId: authData?.user?._id }, (data: any, e: any) => {
         if (data) {
           const pendingOrder = data.find(
             (order: any) => order.status === 'pending',
@@ -87,6 +89,11 @@ const RootNavigator = () => {
     );
   };
 
+  const handleGetAppointment = () => {
+    console.log('handleGetAppointment', authData?.user?._id);
+    dispatch(getAppointmentAction({ clientId: authData?.user?._id }));
+  };
+
   useEffect(() => {
     const events = [
       { name: 'connect', handler: () => console.log('CONNECT') },
@@ -96,11 +103,29 @@ const RootNavigator = () => {
         handler: () => handleOrder(),
       },
       {
+        name: 'appointment_updated',
+        handler: () => {
+          handleGetAppointment();
+        },
+      },
+      {
         name: 'chat.newMessage',
         handler: (event: { orderId: string; roomId: string }) => {
-          console.log('💬 Chat mới cho đơn hàng:', event.orderId);
-          console.log('💬 Chat mới cho phòng:', event.roomId);
           dispatch(getMessageAction({ _orderId: event.orderId }));
+        },
+      },
+      {
+        name: 'partner.locationUpdate',
+        handler: (event: {
+          partnerId: string;
+          latitude: number;
+          longitude: number;
+        }) => {
+          dispatch(
+            getLocationPartnerAction({
+              partnerId: event.partnerId,
+            }),
+          );
         },
       },
     ];
@@ -131,6 +156,7 @@ const RootNavigator = () => {
           );
         });
         handleOrder();
+        dispatch(getAppointmentAction({ clientId: authData?.user?._id }));
       }
     }
     setPrevUserState(authData);

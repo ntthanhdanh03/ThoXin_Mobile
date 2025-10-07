@@ -1,3 +1,7 @@
+import {
+  updateOrderAction,
+  selectApplicantAction,
+} from './../actions/orderAction';
 import * as actions from '../actions/orderAction';
 import { put, takeLatest, delay, all, call } from 'redux-saga/effects';
 import * as types from '../types';
@@ -9,18 +13,8 @@ function* getOrderSaga({
   callback,
 }: ReturnType<typeof actions.getOrderAction>) {
   try {
-    const params: any = {
-      // filter: {
-      //     where: {},
-      //     include: ['createdBy', 'like'],
-      //     order: 'createdAt DESC',
-      // },
-    };
-
-    console.log('params', params);
-
     const response: IResponse = yield call(() =>
-      api.get('/orders', { params }),
+      api.get(`/orders/client/${payload.clientId}`),
     );
     console.log('***getOrderSaga', response);
     if (response && response?.status === 200 && response?.data) {
@@ -65,9 +59,56 @@ function* createOrderSaga({
   }
 }
 
+function* updateOrderSaga({
+  payload,
+  callback,
+}: ReturnType<typeof actions.updateOrderAction>) {
+  try {
+    const API = `/orders/${payload?.id}`;
+    const response: IResponse = yield call(() =>
+      api.patch(API, payload?.updateData),
+    );
+    console.log('***updateOrderSaga', API, payload, response);
+    if (response && response?.status === 200 && response?.data) {
+      yield put(actions.updateOrderSuccessAction(response?.data));
+      callback && callback(payload?.updateData, null);
+    } else {
+      callback && callback(null, 'failure');
+    }
+  } catch (e: any) {
+    console.log('updateOrderSaga', e, e?.response);
+    callback && callback(null, 'failure');
+  }
+}
+
+function* selectApplicantSaga({
+  payload,
+  callback,
+}: ReturnType<typeof actions.selectApplicantAction>) {
+  try {
+    const API = `/orders/${payload?.id}/select`;
+    const response: IResponse = yield call(() =>
+      api.patch(API, payload?.updateData),
+    );
+    console.log('***selectApplicantSaga', API, payload, response);
+
+    if (response && response?.status === 200 && response?.data) {
+      yield put(actions.selectApplicantSuccessAction(response?.data));
+      callback && callback(payload?.updateData, null);
+    } else {
+      callback && callback(null, 'failure');
+    }
+  } catch (e: any) {
+    console.log('selectApplicantSaga', e, e?.response);
+    callback && callback(null, 'failure');
+  }
+}
+
 export default function* orderSaga() {
   yield all([
     takeLatest(types.CREATE_ORDER, createOrderSaga),
     takeLatest(types.GET_ORDER, getOrderSaga),
+    takeLatest(types.UPDATE_ORDER, updateOrderSaga),
+    takeLatest(types.SELECT_APPLICANT, selectApplicantSaga),
   ]);
 }

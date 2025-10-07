@@ -58,7 +58,9 @@ const CreateOrderView = () => {
   const [latitude, setLatitude] = useState('');
   const [choseService, setChoseService] = useState<RawService | null>(null);
   const [images, setImages] = useState<string[]>([]);
-  const [dateTimeOder, setDateTimeOder] = useState<string>();
+  const [dateTimeOder, setDateTimeOder] = useState<string>(
+    new Date().toISOString(),
+  );
   const [showCameraOption, setShowCameraOption] = useState(false);
 
   const serviceData = useMemo(() => {
@@ -127,7 +129,7 @@ const CreateOrderView = () => {
             icon: 'success',
           });
           dispatch(
-            getOrderAction({}, (data: any) => {
+            getOrderAction({ clientId: authData?.users?._id }, (data: any) => {
               if (data) {
                 navigation.goBack();
               }
@@ -166,7 +168,7 @@ const CreateOrderView = () => {
         <Spacer height={10} />
 
         <Input
-          title="Mô tả dịch vụ"
+          title="Mô tả vấn đề của bạn"
           value={choseService?.Mota || ''}
           area
           onChangeText={(text: string) => {

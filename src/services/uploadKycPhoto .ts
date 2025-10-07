@@ -1,5 +1,6 @@
 // utils/upload.ts
 import { api } from './api';
+import { BASE_URL } from './constants';
 
 export const uploadKycPhoto = async (
   image: any,
@@ -27,13 +28,10 @@ export const uploadKycPhoto = async (
       name: image.filename || `photo_${Date.now()}.jpg`,
     } as any);
 
-    const response = await fetch(
-      `http://192.168.1.4:3000/users/upload-kyc/${field}`,
-      {
-        method: 'POST',
-        body: formData,
-      },
-    );
+    const response = await fetch(`${BASE_URL}/users/upload-kyc/${field}`, {
+      method: 'POST',
+      body: formData,
+    });
     console.log('responseresponseresponse', response);
     const data = await response.json();
     if (response.ok) {

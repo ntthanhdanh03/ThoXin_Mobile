@@ -13,14 +13,24 @@ import Header from '../components/Header';
 import Spacer from '../components/Spacer';
 import FastImage from 'react-native-fast-image';
 import { Colors } from '../../styles/Colors';
-import { ic_balence } from '../../assets';
-import { useSelector } from 'react-redux';
+import { ic_balence, ic_check_select, ic_eye_off } from '../../assets';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/InsideStack';
+import Button from '../components/Button';
+import {
+  selectApplicantAction,
+  updateOrderAction,
+} from '../../store/actions/orderAction';
+import GlobalModalController from '../components/GlobalModal/GlobalModalController';
+import { getAppointmentAction } from '../../store/actions/appointmentAction';
 
 const DetailActivityView = ({ route }: any) => {
   const { item } = route.params;
+
+  const dispatch = useDispatch();
+  const { data: authData } = useSelector((store: any) => store.auth);
   const { data: orderData } = useSelector((store: any) => store.order);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -40,6 +50,58 @@ const DetailActivityView = ({ route }: any) => {
     navigation.navigate('ChatViewVer2', { dataRoomChat });
   };
 
+  const handleUpdateOrder = () => {
+    dispatch(
+      updateOrderAction(
+        {
+          id: item?._id,
+          updateData: {
+            status: 'cancelled',
+          },
+        },
+        (data: any, error: any) => {
+          if (data) {
+            navigation.goBack();
+          }
+        },
+      ),
+    );
+  };
+
+  const handleSelectApplicant = (applicant: any) => {
+    GlobalModalController.onActionChange((value: boolean) => {
+      if (value) {
+        dispatch(
+          selectApplicantAction(
+            {
+              id: item?._id,
+              updateData: {
+                partnerId: applicant?.partnerId,
+              },
+            },
+            (data: any, error: any) => {
+              if (data) {
+                dispatch(
+                  getAppointmentAction({ clientId: authData?.user?._id }),
+                );
+                navigation.goBack();
+              }
+            },
+          ),
+        );
+      } else {
+        GlobalModalController.hideModal();
+      }
+    });
+    GlobalModalController.showModal({
+      title: 'Bạn chấp thuận Thợ này ?',
+      description:
+        'Trước khi chấp thuận thợ hãy trao đổi về giá tiền và thời gian',
+      type: 'yesNo',
+      icon: 'warning',
+    });
+  };
+
   const renderApplicant = ({ item: applicant }: any) => (
     <TouchableOpacity style={styles.applicantCard} onPress={() => {}}>
       <View style={styles.applicantHeader}>
@@ -49,7 +111,12 @@ const DetailActivityView = ({ route }: any) => {
         />
         <View style={styles.applicantInfo}>
           <Text style={DefaultStyles.textMedium14Black}>{applicant.name}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
             <Text style={DefaultStyles.textMedium12Black}>Giá đề xuất:</Text>
             <Spacer width={5} />
             <Text
@@ -69,7 +136,24 @@ const DetailActivityView = ({ route }: any) => {
           }}
         >
           <FastImage
-            source={ic_balence}
+            source={ic_eye_off}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 25,
+              marginRight: 12,
+              borderWidth: 1,
+            }}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            handleSelectApplicant(applicant);
+          }}
+        >
+          <FastImage
+            source={ic_check_select}
             style={{
               width: 32,
               height: 32,
@@ -129,6 +213,11 @@ const DetailActivityView = ({ route }: any) => {
             <Text style={styles.noApplicants}>Chưa có thợ nào báo giá</Text>
           )}
         </View>
+        <Button
+          title="Hủy đơn"
+          color={Colors.red30}
+          onPress={handleUpdateOrder}
+        />
       </View>
     </SafeAreaView>
   );

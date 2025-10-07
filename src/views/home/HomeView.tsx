@@ -1,20 +1,140 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet,
   View,
   Text,
+  StyleSheet,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { img_default_avatar } from '../../assets';
-import { DefaultStyles } from '../../styles/DefaultStyles';
-import { scaleModerate } from '../../styles/scaleDimensions';
-import Spacer from '../components/Spacer';
-import { Colors } from '../../styles/Colors';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import { DefaultStyles } from '../../styles/DefaultStyles';
+import { Colors } from '../../styles/Colors';
+import { img_default_avatar } from '../../assets';
+import Spacer from '../components/Spacer';
+import { scaleModerate } from '../../styles/scaleDimensions';
+import { getLocationPartnerAction } from '../../store/actions/locationAction';
+
+const HomeView = () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const { data: authData } = useSelector((store: any) => store.auth);
+  const { data: appointmentData } = useSelector(
+    (store: any) => store.appointment,
+  );
+  const [showCard, setShowCard] = useState(false);
+
+  const appointmentInProgress = appointmentData?.appointmentInProgress?.[0];
+
+  useEffect(() => {
+    if (appointmentInProgress) setShowCard(true);
+  }, [appointmentInProgress]);
+
+  const handleContinue = (status: number) => {
+    dispatch(
+      getLocationPartnerAction(
+        {
+          partnerId: appointmentInProgress.partnerId._id,
+        },
+        (data: any) => {
+          if (data) {
+            navigation.navigate(
+              ...([`AppointmentInProgress${status}View`] as never),
+            );
+          }
+        },
+      ),
+    );
+  };
+
+  const handleNavigation = (type: string) => {
+    navigation.navigate(
+      ...(['CreateOderView', { typeService: type }] as never),
+    );
+  };
+
+  const getStatusText = (status: number) => {
+    switch (status) {
+      case 1:
+        return 'Thợ đang di chuyển đến';
+      case 2:
+        return 'Đang kiểm tra lần cuối';
+      case 3:
+        return 'Đang sửa chữa';
+      case 4:
+        return 'Bàn giao cho khách kiểm tra';
+      case 5:
+        return 'Chờ thanh toán';
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <SafeAreaView style={DefaultStyles.container}>
+      <ScrollView style={[{ flex: 1 }, DefaultStyles.wrapBody]}>
+        <View style={styles.headerBox}>
+          <FastImage
+            style={styles.avatar}
+            source={
+              authData?.user?.avatarUrl
+                ? { uri: authData.user.avatarUrl }
+                : img_default_avatar
+            }
+          />
+          <Spacer width={10} />
+          <Text style={DefaultStyles.textBold14Black}>
+            Xin chào {authData?.user?.fullName}
+          </Text>
+        </View>
+
+        <Spacer height={20} />
+
+        <Text style={DefaultStyles.textBold16Black}>Dịch vụ</Text>
+        <View style={styles.menuRow}>
+          <MenuItem
+            label="Điện"
+            onPress={() => handleNavigation('electricity')}
+          />
+          <MenuItem label="Nước" onPress={() => handleNavigation('water')} />
+          <MenuItem
+            label="Điện lạnh"
+            onPress={() => handleNavigation('air_conditioning')}
+          />
+          <MenuItem
+            label="Khóa"
+            onPress={() => handleNavigation('locksmith')}
+          />
+        </View>
+
+        <Spacer height={120} />
+      </ScrollView>
+
+      {showCard && appointmentInProgress && (
+        <View style={styles.bottomCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>Cuộc hẹn đang xử lý</Text>
+            <Text style={styles.cardText}>
+              Dịch vụ:{' '}
+              {appointmentInProgress?.orderId?.service || 'Không xác định'}
+            </Text>
+            <Text style={styles.cardText}>
+              Trạng thái: {getStatusText(appointmentInProgress?.status)}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.cardButton}
+            onPress={() => handleContinue(appointmentInProgress?.status)}
+          >
+            <Text style={styles.cardButtonText}>Tiếp tục</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+};
 
 const MenuItem = ({
   label,
@@ -28,75 +148,10 @@ const MenuItem = ({
     onPress={onPress}
     activeOpacity={0.7}
   >
-    <View style={styles.menuIcon}>
-      <FastImage style={styles.iconImage} />
-    </View>
+    <View style={styles.menuIcon} />
     <Text style={styles.menuText}>{label}</Text>
   </TouchableOpacity>
 );
-
-const HomeView = () => {
-  const navigation = useNavigation();
-  const { data: authData } = useSelector((store: any) => store.auth);
-  const handleNavigation = (key: string) => {
-    const typeService = key;
-    navigation.navigate(...(['CreateOderView', { typeService }] as never));
-  };
-
-  return (
-    <SafeAreaView style={DefaultStyles.container}>
-      <ScrollView style={[{ flex: 1 }, DefaultStyles.wrapBody]}>
-        {/* Header chào user */}
-        <View style={styles.headerBox}>
-          <View style={styles.headerContent}>
-            <FastImage
-              style={styles.avatar}
-              source={
-                authData?.user?.avatarUrl
-                  ? { uri: authData.user.avatarUrl }
-                  : img_default_avatar
-              }
-            />
-            <Spacer width={10} />
-            <Text style={DefaultStyles.textBold14Black}>
-              Xin chào {authData?.user?.fullName}
-            </Text>
-          </View>
-        </View>
-
-        <Spacer height={15} />
-
-        {/* Dịch vụ */}
-        <Text style={DefaultStyles.textBold16Black}>Dịch vụ</Text>
-        <View style={styles.menuRow}>
-          <View style={styles.menuRow}>
-            <MenuItem
-              label="Điện"
-              onPress={() => handleNavigation('electricity')}
-            />
-            <MenuItem label="Nước" onPress={() => handleNavigation('water')} />
-            <MenuItem
-              label="Điện lạnh"
-              onPress={() => handleNavigation('air_conditioning')}
-            />
-            <MenuItem
-              label="Khóa"
-              onPress={() => handleNavigation('locksmith')}
-            />
-          </View>
-        </View>
-
-        <Spacer height={20} />
-
-        <Text style={DefaultStyles.textBold16Black}>Truy cập nhanh</Text>
-        <View style={styles.menuRow}>
-          <MenuItem label="Lịch sử" />
-          <MenuItem label="Thợ yêu thích" />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
 
 export default HomeView;
 
@@ -110,16 +165,6 @@ const styles = StyleSheet.create({
     padding: 10,
     flexDirection: 'row',
     borderColor: Colors.border01,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.5,
-    elevation: 4,
-  },
-
-  headerContent: {
-    flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
@@ -131,6 +176,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     marginTop: 10,
+    justifyContent: 'space-between',
   },
   menuItem: {
     alignItems: 'center',
@@ -141,16 +187,49 @@ const styles = StyleSheet.create({
     width: 44,
     backgroundColor: Colors.primary,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconImage: {
-    height: 24,
-    width: 24,
   },
   menuText: {
     paddingTop: 5,
     textAlign: 'center',
     ...DefaultStyles.textBold12Black,
+  },
+
+  bottomCard: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  cardTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    color: Colors.primary,
+  },
+  cardText: {
+    fontSize: 13,
+    color: '#333',
+    marginTop: 2,
+  },
+  cardButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  cardButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
 });

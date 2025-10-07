@@ -31,6 +31,30 @@ const orderReducer = (state = initialState, action: IAction) => {
     case types.GET_ORDER + types.SUCCESS: {
       return { ...state, data: action.payload, loading: false };
     }
+    case types.UPDATE_ORDER + types.SUCCESS: {
+      return {
+        ...state,
+        data: state.data.map((order: { _id: any }) =>
+          order._id === action.payload._id
+            ? { ...order, ...action.payload }
+            : order,
+        ),
+        loading: false,
+      };
+    }
+
+    case types.SELECT_APPLICANT + types.SUCCESS: {
+      return {
+        ...state,
+        data: state.data.map((order: { _id: any }) =>
+          order._id === action.payload._id
+            ? { ...order, ...action.payload }
+            : order,
+        ),
+        loading: false,
+      };
+    }
+
     default: {
       return state;
     }

@@ -7,6 +7,12 @@ import CreateOderView from '../views/home/CreateOderView';
 import ChoseLocationView from '../views/home/ChoseLocationView';
 import DetailActivityView from '../views/activity/DetailActivityView';
 import ChatViewVer2 from '../views/chat/ChatViewVer2';
+import AppointmentView from '../views/activity/AppointmentView';
+import AppointmentInProgress1View from '../views/appointment/AppointmentInProgress1View';
+import AppointmentInProgress2View from '../views/appointment/AppointmentInProgress2View';
+import AppointmentInProgress3View from '../views/appointment/AppointmentInProgress3View';
+import AppointmentInProgress4View from '../views/appointment/AppointmentInProgress4View';
+import AppointmentInProgress5View from '../views/appointment/AppointmentInProgress5View';
 
 export type RootStackParamList = {
   BottomTab: undefined;
@@ -17,6 +23,12 @@ export type RootStackParamList = {
   };
   DetailActivityView: { item: any };
   ChatViewVer2: { dataRoomChat: any };
+  AppointmentView: {};
+  AppointmentInProgress1View: undefined;
+  AppointmentInProgress2View: undefined;
+  AppointmentInProgress3View: undefined;
+  AppointmentInProgress4View: undefined;
+  AppointmentInProgress5View: undefined;
 };
 
 const InStack = createNativeStackNavigator<RootStackParamList>();
@@ -53,6 +65,27 @@ const InsideStack = () => {
         component={DetailActivityView}
       />
       <InStack.Screen name="ChatViewVer2" component={ChatViewVer2} />
+      <InStack.Screen name="AppointmentView" component={AppointmentView} />
+      <InStack.Screen
+        name="AppointmentInProgress1View"
+        component={AppointmentInProgress1View}
+      />
+      <InStack.Screen
+        name="AppointmentInProgress2View"
+        component={AppointmentInProgress2View}
+      />
+      <InStack.Screen
+        name="AppointmentInProgress3View"
+        component={AppointmentInProgress3View}
+      />
+      <InStack.Screen
+        name="AppointmentInProgress4View"
+        component={AppointmentInProgress4View}
+      />
+      <InStack.Screen
+        name="AppointmentInProgress5View"
+        component={AppointmentInProgress5View}
+      />
     </InStack.Navigator>
   );
 };

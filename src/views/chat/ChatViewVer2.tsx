@@ -37,18 +37,13 @@ const ChatViewVer2 = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState('');
   const [inputHeight, setInputHeight] = useState(30);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Lọc messages theo roomId
   useEffect(() => {
-    console.log('dataRoomChat', dataRoomChat);
-    console.log('messagesData', messagesData);
     if (messagesData && dataRoomChat?.roomId) {
       const filteredMessages = messagesData.filter(
         (msg: any) => msg.roomId === dataRoomChat.roomId,
       );
       setMessages(filteredMessages);
-      setIsLoading(false);
     }
   }, [messagesData, dataRoomChat]);
 
@@ -119,26 +114,21 @@ const ChatViewVer2 = () => {
           </View>
         </View>
 
-        {/* Danh sách tin nhắn */}
         <View style={{ flex: 1 }}>
-          {isLoading ? (
-            <ActivityIndicator />
-          ) : (
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={item => item._id}
-              renderItem={renderMessage}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 10 }}
-              onContentSizeChange={() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-              }}
-              onLayout={() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-              }}
-            />
-          )}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={item => item._id}
+            renderItem={renderMessage}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 10 }}
+            onContentSizeChange={() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }}
+            onLayout={() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }}
+          />
         </View>
 
         {/* Input soạn tin nhắn */}

@@ -1,11 +1,10 @@
 import axios from 'axios';
-import i18next from 'i18next';
-import { useSelector } from 'react-redux';
-import { store } from '../store';
 import qs from 'qs';
+import { store } from '../store';
+import { BASE_URL } from './constants';
 
 export const api = axios.create({
-  baseURL: 'http://192.168.1.4:3000',
+  baseURL: BASE_URL,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

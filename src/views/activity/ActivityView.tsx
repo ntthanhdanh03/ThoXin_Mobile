@@ -21,6 +21,7 @@ import { RootStackParamList } from '../../navigation/InsideStack';
 const { width } = Dimensions.get('window');
 
 const ActivityView = () => {
+  const { data: authData } = useSelector((store: any) => store.auth);
   const dispatch = useDispatch();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -28,6 +29,10 @@ const ActivityView = () => {
 
   const handleNavigationDetailOrder = (item: any) => {
     navigation.navigate('DetailActivityView', { item });
+  };
+
+  const handleNavigationAppointment = (item: any) => {
+    navigation.navigate('AppointmentView', { item });
   };
 
   const getStatusColor = (status: string) => {
@@ -92,19 +97,34 @@ const ActivityView = () => {
       </View>
 
       <Spacer height={10} />
-      <View style={styles.cardFooter}>
-        <View style={styles.orderInfo}>
+
+      {item.status === 'pending' ? (
+        <View style={styles.cardFooter}>
+          <View style={styles.orderInfo}>
+            <Text style={DefaultStyles.textRegular13Gray}>
+              #{item._id?.slice(-6)}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => handleNavigationDetailOrder(item)}
+          >
+            <Text style={styles.viewButtonText}>Xem chi tiết</Text>
+          </TouchableOpacity>
+        </View>
+      ) : item.status === 'completed' ? (
+        <View style={styles.cardFooter}>
           <Text style={DefaultStyles.textRegular13Gray}>
             #{item._id?.slice(-6)}
           </Text>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => handleNavigationAppointment(item)}
+          >
+            <Text style={styles.viewButtonText}>Xem cuộc hẹn</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.viewButton}
-          onPress={() => handleNavigationDetailOrder(item)}
-        >
-          <Text style={styles.viewButtonText}>Xem chi tiết</Text>
-        </TouchableOpacity>
-      </View>
+      ) : null}
     </View>
   );
 
@@ -126,7 +146,7 @@ const ActivityView = () => {
           renderItem={renderItem}
           refreshing={false}
           onRefresh={() => {
-            dispatch(getOrderAction({}));
+            dispatch(getOrderAction({ clientId: authData?.user?._id }));
           }}
           onEndReachedThreshold={0.5}
           showsVerticalScrollIndicator={false}
