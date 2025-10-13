@@ -1,188 +1,217 @@
+import { useState, useEffect } from 'react';
 import { AppState, DeviceEventEmitter, StyleSheet } from 'react-native';
-import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import OutsideStack from './OutsideStack';
-import { navigationRef } from './NavigationService';
-import InsideStack from './InsideStack';
+import { NavigationContainer } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  FirebaseMessagingTypes,
   getMessaging,
+  FirebaseMessagingTypes,
 } from '@react-native-firebase/messaging';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { navigationRef } from './NavigationService';
+import OutsideStack from './OutsideStack';
+import InsideStack from './InsideStack';
+import NotificationModal from './NotificationModal';
+
 import {
   createInstallationAction,
   refreshTokenAction,
 } from '../store/actions/authAction';
 import {
-  getFCMToken,
-  initNotificationConfig,
-} from '../utils/notificationUtils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getOrderAction } from '../store/actions/orderAction';
-import SocketUtil from '../utils/socketUtil';
-import NotificationModal from './NotificationModal';
-import {
   getChatRoomByOrderAction,
   getMessageAction,
 } from '../store/actions/chatAction';
+import { getOrderAction } from '../store/actions/orderAction';
 import { getAppointmentAction } from '../store/actions/appointmentAction';
 import { getLocationPartnerAction } from '../store/actions/locationAction';
 
+import {
+  getFCMToken,
+  initNotificationConfig,
+} from '../utils/notificationUtils';
+import SocketUtil from '../utils/socketUtil';
+import '../utils/appStateUtil';
+
 const Stack = createNativeStackNavigator();
+
+interface NotificationState {
+  title?: string;
+  message?: string;
+  visible: boolean;
+}
+
 const RootNavigator = () => {
   const dispatch = useDispatch();
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { data: authData } = useSelector((store: any) => store.auth);
-  const { data: orderData } = useSelector((store: any) => store.order);
+
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [notif, setNotif] = useState<NotificationState>({ visible: false });
   const [prevUserState, setPrevUserState] = useState<any>(null);
-  const [notif, setNotif] = useState<{
-    title?: string;
-    message?: string;
-    visible: boolean;
-  }>({
-    visible: false,
-  });
 
   useEffect(() => {
-    const bootstrap = async () => {
-      const token = await AsyncStorage.getItem('authToken');
-      if (token) {
-        dispatch(
-          refreshTokenAction(
-            { refreshToken: token },
-            async (data: any, error?: any) => {
-              if (data) {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        if (token) {
+          dispatch(
+            refreshTokenAction(
+              { refreshToken: token },
+              (data: any, error?: any) => {
+                if (!data) {
+                  AsyncStorage.removeItem('authToken');
+                }
                 setIsAuthChecked(true);
-              } else {
-                await AsyncStorage.removeItem('authToken');
-                setIsAuthChecked(true);
-              }
-            },
-          ),
-        );
-      } else {
+              },
+            ),
+          );
+        } else {
+          setIsAuthChecked(true);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
         setIsAuthChecked(true);
       }
     };
-    bootstrap();
-  }, []);
 
-  const handleOrder = () => {
+    checkAuth();
+  }, [dispatch]);
+
+  const handleOrder = (clientId: string) => {
     dispatch(
-      getOrderAction({ clientId: authData?.user?._id }, (data: any, e: any) => {
-        if (data) {
-          const pendingOrder = data.find(
-            (order: any) => order.status === 'pending',
-          );
+      getOrderAction({ clientId }, (orders: any[], error?: any) => {
+        if (!orders) return;
 
-          if (pendingOrder) {
-            const orderId = pendingOrder._id;
-            dispatch(getChatRoomByOrderAction({ _orderId: orderId }));
-            dispatch(
-              getMessageAction({ _orderId: orderId }, (data: any) => {}),
-            );
-          } else {
-          }
+        const pendingOrder = orders.find(order => order.status === 'pending');
+        if (pendingOrder) {
+          const { _id: orderId } = pendingOrder;
+          dispatch(getChatRoomByOrderAction({ _orderId: orderId }));
+          dispatch(getMessageAction({ _orderId: orderId }));
         }
       }),
     );
   };
 
-  const handleGetAppointment = () => {
-    console.log('handleGetAppointment', authData?.user?._id);
-    dispatch(getAppointmentAction({ clientId: authData?.user?._id }));
-  };
-
   useEffect(() => {
-    const events = [
-      { name: 'connect', handler: () => console.log('CONNECT') },
-      { name: 'disconnect', handler: () => console.log('DISCONNECT') },
+    const listeners = [
       {
         name: 'order_addApplicant',
-        handler: () => handleOrder(),
+        handler: (data: any) => handleOrder(data),
       },
       {
         name: 'appointment_updated',
-        handler: () => {
-          handleGetAppointment();
+        handler: (data: any) => {
+          dispatch(getAppointmentAction({ clientId: data.clientId }));
         },
       },
       {
         name: 'chat.newMessage',
-        handler: (event: { orderId: string; roomId: string }) => {
+        handler: (event: any) => {
           dispatch(getMessageAction({ _orderId: event.orderId }));
         },
       },
       {
         name: 'partner.locationUpdate',
-        handler: (event: {
-          partnerId: string;
-          latitude: number;
-          longitude: number;
-        }) => {
-          dispatch(
-            getLocationPartnerAction({
-              partnerId: event.partnerId,
-            }),
-          );
+        handler: (event: any) => {
+          dispatch(getLocationPartnerAction({ partnerId: event.partnerId }));
         },
       },
     ];
-    const subscriptions = events.map(e =>
-      DeviceEventEmitter.addListener(e.name, e.handler),
+
+    const subscriptions = listeners.map(({ name, handler }) =>
+      DeviceEventEmitter.addListener(name, handler),
+    );
+
+    return () => subscriptions.forEach(sub => sub.remove());
+  }, [dispatch]);
+
+  // Setup notifications and user data
+  useEffect(() => {
+    if (!authData || prevUserState !== null) return;
+
+    const setupNotifications = async () => {
+      const userId = authData?.user?._id;
+
+      initNotificationConfig((installationData: any) => {
+        handleCreateInstallation(authData, installationData);
+        SocketUtil.connect(userId, 'client');
+
+        const unsubscribe = getMessaging().onMessage(
+          (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+            setNotif({
+              visible: true,
+              title: remoteMessage.notification?.title,
+              message: remoteMessage.notification?.body,
+            });
+          },
+        );
+      });
+
+      handleOrder(userId);
+      dispatch(getAppointmentAction({ clientId: userId }));
+    };
+
+    setupNotifications();
+    setPrevUserState(authData);
+  }, [authData, dispatch]);
+
+  // Handle app foreground/background
+  useEffect(() => {
+    const userId = authData?.user?._id;
+    if (!userId) return;
+
+    const handleForeground = () => {
+      dispatch(getAppointmentAction({ clientId: userId }));
+      handleOrder(userId);
+    };
+
+    const subForeground = DeviceEventEmitter.addListener(
+      'APP_FOREGROUND',
+      handleForeground,
+    );
+
+    const subBackground = DeviceEventEmitter.addListener(
+      'APP_BACKGROUND',
+      () => {
+        // Background logic
+      },
     );
 
     return () => {
-      subscriptions.forEach(sub => sub.remove());
+      subForeground.remove();
+      subBackground.remove();
     };
-  }, []);
+  }, [authData, dispatch]);
 
-  useEffect(() => {
-    if (authData) {
-      if (prevUserState === null) {
-        initNotificationConfig((installationData: any) => {
-          handleCreateInstallation(authData, installationData);
-          SocketUtil.connect(authData?.user?._id, 'client');
-          const unsubscribe = getMessaging().onMessage(
-            (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-              console.log('Foreground notification:', remoteMessage);
-              setNotif({
-                visible: true,
-                title: remoteMessage.notification?.title,
-                message: remoteMessage.notification?.body,
-              });
-            },
-          );
-        });
-        handleOrder();
-        dispatch(getAppointmentAction({ clientId: authData?.user?._id }));
-      }
-    }
-    setPrevUserState(authData);
-  }, [authData]);
-
+  // Create device installation
   const handleCreateInstallation = async (
     userData: any,
     installationData: any,
   ) => {
     if (
-      installationData?.token &&
-      userData?.user?.deviceToken !== installationData?.token
+      !installationData?.token ||
+      userData?.user?.deviceToken === installationData?.token
     ) {
-      const fcmToken = await getFCMToken();
-      dispatch(
-        createInstallationAction({
-          userId: userData?.user?._id,
-          deviceToken: {
-            token: installationData?.token,
-            osVersion: installationData?.os,
-            fcmToken: fcmToken,
-          },
-        }),
-      );
+      return;
     }
+
+    const fcmToken = await getFCMToken();
+    dispatch(
+      createInstallationAction({
+        userId: userData?.user?._id,
+        deviceToken: {
+          token: installationData?.token,
+          osVersion: installationData?.os,
+          fcmToken,
+        },
+      }),
+    );
   };
+
+  if (!isAuthChecked) {
+    return null;
+  }
+
   return (
     <>
       <NavigationContainer ref={navigationRef}>
@@ -192,25 +221,22 @@ const RootNavigator = () => {
             animation: 'none',
           }}
         >
-          <>
-            {authData ? (
-              <Stack.Screen name="InsideStack" component={InsideStack} />
-            ) : (
-              <Stack.Screen name="OutsideStack" component={OutsideStack} />
-            )}
-          </>
+          {authData ? (
+            <Stack.Screen name="InsideStack" component={InsideStack} />
+          ) : (
+            <Stack.Screen name="OutsideStack" component={OutsideStack} />
+          )}
         </Stack.Navigator>
       </NavigationContainer>
+
       <NotificationModal
         visible={notif.visible}
         title={notif.title}
         message={notif.message}
-        onHide={() => setNotif({ ...notif, visible: false })}
+        onHide={() => setNotif(prev => ({ ...prev, visible: false }))}
       />
     </>
   );
 };
 
 export default RootNavigator;
-
-const styles = StyleSheet.create({});

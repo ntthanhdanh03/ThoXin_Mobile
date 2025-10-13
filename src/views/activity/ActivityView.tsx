@@ -32,7 +32,13 @@ const ActivityView = () => {
   };
 
   const handleNavigationAppointment = (item: any) => {
-    navigation.navigate('AppointmentView', { item });
+   
+    if (item.status === 6) {
+      navigation.navigate(...([`AppointmentView`, { item }] as never));
+    } else {
+      console.log('123');
+      // navigation.navigate(...([`AppointmentInProgressView`] as never));
+    }
   };
 
   const getStatusColor = (status: string) => {

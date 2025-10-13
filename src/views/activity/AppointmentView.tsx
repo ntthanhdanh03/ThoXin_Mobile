@@ -11,13 +11,14 @@ import { RootStackParamList } from '../../navigation/InsideStack';
 const AppointmentView = ({ route }: any) => {
   const { item } = route.params;
   const dispatch = useDispatch();
-  const { data: orderData } = useSelector((store: any) => store.order);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    console.log('item', item?._id);
+  }, []);
 
   return (
     <SafeAreaView style={DefaultStyles.container}>
-      <Header isBack title="Cuộc hẹn" />
+      <Header isBack title="Chi tiết cuộc hẹn" />
     </SafeAreaView>
   );
 };

@@ -1,5 +1,5 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -14,13 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from '../components/Spacer';
 import Input from '../components/Input';
 import FastImage from 'react-native-fast-image';
-import { ic_balence } from '../../assets';
 import { Colors } from '../../styles/Colors';
-import PhotoOptionsPicker from '../components/PhotoOptionsPicker';
 import SwipeButton from 'rn-swipe-button';
 import Header from '../components/Header';
 import GlobalModalController from '../components/GlobalModal/GlobalModalController';
-import { uploadKycPhoto } from '../../services/uploadKycPhoto ';
+import ImageViewing from 'react-native-image-viewing';
 import { updateAppointmentAction } from '../../store/actions/appointmentAction';
 
 const AppointmentInProgress2View = () => {
@@ -29,42 +27,45 @@ const AppointmentInProgress2View = () => {
   const { data: appointmentData } = useSelector(
     (store: any) => store.appointment,
   );
-  const appointment = appointmentData.appointmentInProgress[0];
-  const [images, setImages] = useState<string[]>([]);
-  const [showCameraOption, setShowCameraOption] = useState(false);
+  const APPOINTMENT_UPDATE_IN_PROGRESS =
+    appointmentData?.appointmentInProgress?.[0];
 
-  const handleUploadPhoto = async (image: any) => {
-    const uploadedImage = await uploadKycPhoto(image, 'imageService');
-    if (uploadedImage?.url) {
-      setImages(prev => [...prev, uploadedImage.url]);
-    }
-  };
+  const [isImageViewVisible, setIsImageViewVisible] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const handleConfirm = async () => {
-    console.log('appointment', appointment);
-    // const postData = {
-    //   status: 3,
-    //   agreedPrice: price,
-    //   beforeImages: {
-    //     images: images,
-    //     note: description,
-    //   },
-    // };
-    // const typeUpdate = 'APPOINTMENT_UPDATE_IN_PROGRESS';
-    // const dataUpdate = {
-    //   id: appointmentData.appointmentInProgress[0]._id,
-    //   typeUpdate,
-    //   postData,
-    // };
-    // console.log('dataUpdate', dataUpdate);
-    // dispatch(
-    //   updateAppointmentAction(dataUpdate, (data: any) => {
-    //     if (data) {
-    //       navigation.navigate(...(['AppointmentInProgress3View'] as never));
-    //     }
-    //   }),
-    // );
+    const postData = {
+      status: 3,
+      beforeImages: {
+        images: APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.images,
+        note: APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.note,
+        approve: true,
+      },
+    };
+    const typeUpdate = 'APPOINTMENT_UPDATE_IN_PROGRESS';
+    const dataUpdate = {
+      id: appointmentData.appointmentInProgress[0]._id,
+      typeUpdate,
+      postData,
+    };
+    dispatch(
+      updateAppointmentAction(dataUpdate, (data: any) => {
+        if (data) {
+          if (APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.approve === false) {
+            // setLoading(true)
+          }
+
+          // navigation.navigate(...(['AppointmentInProgress3View'] as never))
+        }
+      }),
+    );
   };
+
+  const images = APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.images || [];
+  const hasCompleteInfo =
+    !!APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.note &&
+    !!APPOINTMENT_UPDATE_IN_PROGRESS?.agreedPrice &&
+    APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.images?.length > 0;
 
   return (
     <SafeAreaView style={DefaultStyles.container}>
@@ -76,7 +77,9 @@ const AppointmentInProgress2View = () => {
         <Input
           title="Mô tả vấn đề của Khách"
           area
-          value={appointment?.beforeImages?.note}
+          value={
+            APPOINTMENT_UPDATE_IN_PROGRESS?.beforeImages?.note || 'Chờ cập nhật'
+          }
           editable={false}
         />
         <Spacer height={10} />
@@ -85,7 +88,10 @@ const AppointmentInProgress2View = () => {
           title="Giá tiền cho công việc (Giá cuối cùng thỏa thuận)"
           containerStyle={{ width: '100%' }}
           editable={false}
-          value={appointment?.agreedPrice?.toLocaleString()}
+          value={
+            APPOINTMENT_UPDATE_IN_PROGRESS?.agreedPrice?.toLocaleString() ||
+            'Chờ cập nhật'
+          }
         />
 
         <Spacer height={20} />
@@ -94,43 +100,38 @@ const AppointmentInProgress2View = () => {
           Tình trạng trước
         </Text>
         <View style={styles.imagesWrapper}>
-          {images?.map((img, index) => (
-            <View key={index} style={styles.imageBox}>
-              <FastImage
-                source={{ uri: img }}
-                style={styles.capturedImage}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-              <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() =>
-                  setImages(prev => prev.filter((_, i) => i !== index))
-                }
-              >
-                <Text style={styles.deleteText}>×</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-
-          {images?.length < 5 && (
+          {images.map((img: string, index: number) => (
             <TouchableOpacity
-              style={[styles.imageBox, styles.addBox]}
-              onPress={() => setShowCameraOption(true)}
-              activeOpacity={0.7}
+              key={index}
+              onPress={() => {
+                setImageIndex(index);
+                setIsImageViewVisible(true);
+              }}
             >
               <FastImage
-                source={ic_balence}
-                style={styles.image}
-                resizeMode={FastImage.resizeMode.contain}
+                source={{ uri: img }}
+                style={styles.imageBox}
+                resizeMode={FastImage.resizeMode.cover}
               />
-              <Text style={DefaultStyles.textMedium12Black}>Thêm ảnh</Text>
             </TouchableOpacity>
-          )}
+          ))}
         </View>
       </ScrollView>
 
       <View style={{ borderTopWidth: 1, borderColor: Colors.border01 }}>
         <Spacer height={10} />
+        {!hasCompleteInfo && (
+          <Text
+            style={{
+              ...DefaultStyles.textMedium14Black,
+              color: Colors.red30,
+              textAlign: 'center',
+            }}
+          >
+            Đợi thợ cập nhật đầy đủ thông tin mới có thể vuốt
+          </Text>
+        )}
+
         <SwipeButton
           containerStyles={{
             borderRadius: 8,
@@ -138,8 +139,9 @@ const AppointmentInProgress2View = () => {
             marginHorizontal: 16,
             marginBottom: 10,
           }}
+          disabled={!hasCompleteInfo}
           railBackgroundColor={Colors.whiteAE}
-          railFillBackgroundColor={Colors.black01}
+          railFillBackgroundColor={'rgba(0,0,0,0.4)'}
           railBorderColor={Colors.gray72}
           railFillBorderColor={Colors.whiteAE}
           railStyles={{ borderRadius: 8 }}
@@ -168,13 +170,20 @@ const AppointmentInProgress2View = () => {
         />
       </View>
 
-      <PhotoOptionsPicker
-        isVisible={showCameraOption}
-        onSelectPhoto={image => {
-          handleUploadPhoto(image);
-          setShowCameraOption(false);
-        }}
-        onClose={() => setShowCameraOption(false)}
+      {/* Modal hiển thị ảnh zoom với indicator */}
+      <ImageViewing
+        images={images.map((uri: any) => ({ uri }))}
+        imageIndex={imageIndex}
+        visible={isImageViewVisible}
+        onRequestClose={() => setIsImageViewVisible(false)}
+        // Hiển thị indicator dạng "1 / 3"
+        HeaderComponent={({ imageIndex }) => (
+          <View style={styles.headerIndicator}>
+            <Text style={styles.indicatorText}>
+              {imageIndex + 1} / {images.length}
+            </Text>
+          </View>
+        )}
       />
     </SafeAreaView>
   );
@@ -197,35 +206,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    position: 'relative',
   },
-  capturedImage: {
-    width: '100%',
-    height: '100%',
-  },
-  addBox: {
-    backgroundColor: Colors.whiteAE,
-  },
-  image: {
-    width: 36,
-    height: 36,
-    marginBottom: 4,
-  },
-  deleteBtn: {
+  headerIndicator: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: Colors.black01,
+    top: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  deleteText: {
+  indicatorText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    lineHeight: 20,
   },
 });

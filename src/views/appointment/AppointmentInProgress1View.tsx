@@ -29,6 +29,7 @@ import {
   ic_eye_off,
   img_default_avatar,
 } from '../../assets';
+import { getLocationPartnerAction } from '../../store/actions/locationAction';
 
 const MAPBOX_ACCESS_TOKEN =
   'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A';
@@ -60,12 +61,21 @@ const AppointmentInProgress1View = () => {
   );
   const [loading, setLoading] = useState(true);
 
+  const appointmentInProgress = appointmentData?.appointmentInProgress?.[0];
+
   const destination: [number, number] | null = useMemo(() => {
     if (!order?.longitude || !order?.latitude) return null;
     const lng = parseFloat(order.longitude);
     const lat = parseFloat(order.latitude);
     return !isNaN(lng) && !isNaN(lat) ? [lng, lat] : null;
   }, [order]);
+  useEffect(() => {
+    dispatch(
+      getLocationPartnerAction({
+        partnerId: appointmentInProgress.partnerId._id,
+      }),
+    );
+  }, []);
 
   useEffect(() => {
     if (locationPartner?.latitude && locationPartner?.longitude) {

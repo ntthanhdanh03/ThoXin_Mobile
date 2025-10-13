@@ -13,6 +13,7 @@ import AppointmentInProgress2View from '../views/appointment/AppointmentInProgre
 import AppointmentInProgress3View from '../views/appointment/AppointmentInProgress3View';
 import AppointmentInProgress4View from '../views/appointment/AppointmentInProgress4View';
 import AppointmentInProgress5View from '../views/appointment/AppointmentInProgress5View';
+import AppointmentInProgressView from '../views/appointment/AppointmentInProgressView';
 
 export type RootStackParamList = {
   BottomTab: undefined;
@@ -24,11 +25,12 @@ export type RootStackParamList = {
   DetailActivityView: { item: any };
   ChatViewVer2: { dataRoomChat: any };
   AppointmentView: {};
-  AppointmentInProgress1View: undefined;
-  AppointmentInProgress2View: undefined;
-  AppointmentInProgress3View: undefined;
-  AppointmentInProgress4View: undefined;
-  AppointmentInProgress5View: undefined;
+  AppointmentInProgressView: undefined;
+  // AppointmentInProgress1View: undefined;
+  // AppointmentInProgress2View: undefined;
+  // AppointmentInProgress3View: undefined;
+  // AppointmentInProgress4View: undefined;
+  // AppointmentInProgress5View: undefined;
 };
 
 const InStack = createNativeStackNavigator<RootStackParamList>();
@@ -67,6 +69,10 @@ const InsideStack = () => {
       <InStack.Screen name="ChatViewVer2" component={ChatViewVer2} />
       <InStack.Screen name="AppointmentView" component={AppointmentView} />
       <InStack.Screen
+        name="AppointmentInProgressView"
+        component={AppointmentInProgressView}
+      />
+      {/* <InStack.Screen
         name="AppointmentInProgress1View"
         component={AppointmentInProgress1View}
       />
@@ -85,7 +91,7 @@ const InsideStack = () => {
       <InStack.Screen
         name="AppointmentInProgress5View"
         component={AppointmentInProgress5View}
-      />
+      /> */}
     </InStack.Navigator>
   );
 };

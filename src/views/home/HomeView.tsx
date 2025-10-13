@@ -32,21 +32,8 @@ const HomeView = () => {
     if (appointmentInProgress) setShowCard(true);
   }, [appointmentInProgress]);
 
-  const handleContinue = (status: number) => {
-    dispatch(
-      getLocationPartnerAction(
-        {
-          partnerId: appointmentInProgress.partnerId._id,
-        },
-        (data: any) => {
-          if (data) {
-            navigation.navigate(
-              ...([`AppointmentInProgress${status}View`] as never),
-            );
-          }
-        },
-      ),
-    );
+  const handleContinue = () => {
+    navigation.navigate(...([`AppointmentInProgressView`] as never));
   };
 
   const handleNavigation = (type: string) => {
@@ -126,7 +113,7 @@ const HomeView = () => {
           </View>
           <TouchableOpacity
             style={styles.cardButton}
-            onPress={() => handleContinue(appointmentInProgress?.status)}
+            onPress={() => handleContinue()}
           >
             <Text style={styles.cardButtonText}>Tiếp tục</Text>
           </TouchableOpacity>

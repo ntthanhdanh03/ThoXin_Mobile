@@ -21,6 +21,7 @@ export default class SocketUtil {
     this.socket.on('connect', () => DeviceEventEmitter.emit('connect'));
     this.socket.on('disconnect', () => DeviceEventEmitter.emit('disconnect'));
     this.socket.on('order_addApplicant', data => {
+      console.log('order_addApplicantttttt', data);
       DeviceEventEmitter.emit('order_addApplicant', data);
     });
     this.socket.on('appointment_updated', data => {
