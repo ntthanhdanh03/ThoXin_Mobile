@@ -46,6 +46,10 @@ export default class SocketUtil {
         });
       },
     );
+
+    this.socket.on('appointment.updateComplete', (appointment: any) => {
+      DeviceEventEmitter.emit('appointment.updateComplete', { appointment });
+    });
   }
 
   static on(event: string, callback: (data: any) => void) {

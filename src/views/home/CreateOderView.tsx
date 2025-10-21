@@ -24,6 +24,7 @@ import { ic_balence } from '../../assets';
 import { Colors } from '../../styles/Colors';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { RootStackParamList } from '../../navigation/InsideStack';
+import { scaleModerate } from '../../styles/scaleDimensions';
 
 import {
   AIR_CONDITIONING,
@@ -157,115 +158,133 @@ const CreateOrderView = () => {
     <SafeAreaView style={DefaultStyles.container}>
       <Header isBack title="Thông tin dịch vụ" />
 
-      <ScrollView style={{ ...DefaultStyles.wrapBody, flex: 1 }}>
-        <Spacer height={10} />
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentContainer}>
+          <Spacer height={16} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔧 Dịch vụ</Text>
+            <Selection
+              data={serviceData}
+              onSelect={(selectedItem: any) =>
+                setChoseService(selectedItem.origin)
+              }
+              textStyle={{ ...DefaultStyles.textRegular14Black }}
+            />
+          </View>
 
-        <Selection
-          title="Dịch vụ"
-          data={serviceData}
-          onSelect={(selectedItem: any) => setChoseService(selectedItem.origin)}
-        />
-        <Spacer height={10} />
+          <Spacer height={20} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📝 Mô tả vấn đề</Text>
+            <Input
+              value={choseService?.Mota || ''}
+              area
+              placeholder="Vui lòng mô tả chi tiết vấn đề của bạn..."
+              onChangeText={(text: string) => {
+                setChoseService(prev =>
+                  prev
+                    ? { ...prev, Mota: text }
+                    : { key: '', nameService: '', rangePrice: '', Mota: text },
+                );
+              }}
+            />
+          </View>
 
-        <Input
-          title="Mô tả vấn đề của bạn"
-          value={choseService?.Mota || ''}
-          area
-          onChangeText={(text: string) => {
-            setChoseService(prev =>
-              prev
-                ? { ...prev, Mota: text }
-                : { key: '', nameService: '', rangePrice: '', Mota: text },
-            );
-          }}
-        />
-        <Spacer height={10} />
-
-        <View style={{ flexDirection: 'row' }}>
-          <Input
-            title="Địa điểm"
-            value={address}
-            area
-            containerStyle={{ width: '90%' }}
-            editable={false}
-          />
-          <TouchableOpacity onPress={handleNavigationMap}>
-            <Text style={{ color: Colors.black01 }}>Map</Text>
-          </TouchableOpacity>
-        </View>
-        <Spacer height={10} />
-
-        <DateSelection
-          title="Thời gian"
-          mode="datetime"
-          maximumDate="yes"
-          limitDays={7}
-          message="Chỉ cho phép đặt hẹn trong vòng 7 ngày"
-          onDateChange={(date: Date) => setDateTimeOder(date.toISOString())}
-        />
-
-        <Spacer height={20} />
-
-        <Text style={{ ...DefaultStyles.textBold14Black, marginBottom: 8 }}>
-          Ảnh (Tối đa 4 ảnh)
-        </Text>
-        <View style={styles.imagesWrapper}>
-          {images.map((img, index) => (
-            <View key={index} style={styles.imageBox}>
-              <FastImage
-                source={{ uri: img }}
-                style={styles.capturedImage}
-                resizeMode={FastImage.resizeMode.cover}
+          <Spacer height={20} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📍 Địa điểm</Text>
+            <View style={styles.locationContainer}>
+              <Input
+                value={address}
+                area
+                placeholder="Chọn địa điểm trên bản đồ"
+                containerStyle={styles.locationInput}
+                editable={false}
               />
               <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() =>
-                  setImages(prev => prev.filter((_, i) => i !== index))
-                }
+                style={styles.mapButton}
+                onPress={handleNavigationMap}
+                activeOpacity={0.8}
               >
-                <Text style={styles.deleteText}>×</Text>
+                <Text style={styles.mapIcon}>🗺️</Text>
               </TouchableOpacity>
             </View>
-          ))}
+          </View>
 
-          {images.length < 4 && (
-            <TouchableOpacity
-              style={[styles.imageBox, styles.addBox]}
-              onPress={() => setShowCameraOption(true)}
-              activeOpacity={0.7}
-            >
-              <FastImage
-                source={ic_balence}
-                style={styles.image}
-                resizeMode={FastImage.resizeMode.contain}
-              />
-              <Text style={DefaultStyles.textMedium12Black}>Thêm ảnh</Text>
-            </TouchableOpacity>
-          )}
+          <Spacer height={20} />
+
+          {/* Date Time */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>⏰ Thời gian</Text>
+            <DateSelection
+              mode="datetime"
+              maximumDate="yes"
+              limitDays={7}
+              message="Chỉ cho phép đặt hẹn trong vòng 7 ngày"
+              onDateChange={(date: Date) => setDateTimeOder(date.toISOString())}
+            />
+          </View>
+
+          <Spacer height={20} />
+
+          {/* Images */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📸 Hình ảnh (Tối đa 4 ảnh)</Text>
+            <View style={styles.imagesWrapper}>
+              {images.map((img, index) => (
+                <View key={index} style={styles.imageBox}>
+                  <FastImage
+                    source={{ uri: img }}
+                    style={styles.capturedImage}
+                    resizeMode={FastImage.resizeMode.cover}
+                  />
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() =>
+                      setImages(prev => prev.filter((_, i) => i !== index))
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.deleteText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              {images.length < 4 && (
+                <TouchableOpacity
+                  style={[styles.imageBox, styles.addBox]}
+                  onPress={() => setShowCameraOption(true)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.addBoxContent}>
+                    <Text style={styles.addIcon}>📷</Text>
+                    <Text style={DefaultStyles.textMedium12Black}>
+                      Thêm ảnh
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <Spacer height={20} />
         </View>
       </ScrollView>
 
-      <View style={{ borderTopWidth: 1, borderColor: Colors.border01 }}>
-        <Spacer height={10} />
-        <View style={{ flexDirection: 'row', alignSelf: 'center' }}>
-          <Text style={{ ...DefaultStyles.textMedium14Black }}>
-            Giá tham khảo:
-          </Text>
-          <Spacer width={5} />
-          <Text
-            style={{
-              ...DefaultStyles.textMedium14Black,
-              color: Colors.green34,
-            }}
-          >
-            {choseService?.rangePrice || ' Vui lòng chọn dịch vụ'}
+      {/* Bottom Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.priceContainer}>
+          <Text style={DefaultStyles.textMedium14Black}>Giá tham khảo</Text>
+          <Text style={styles.priceText}>
+            {choseService?.rangePrice || 'Chọn dịch vụ để xem giá'}
           </Text>
         </View>
-        <Spacer height={10} />
 
         <Button
-          title="Tìm thợ"
-          containerStyle={{ marginHorizontal: 10 }}
+          title="Tìm thợ ngay"
+          containerStyle={styles.submitButton}
           disable={isDisabled}
           onPress={handleCreateOrder}
         />
@@ -286,19 +305,64 @@ const CreateOrderView = () => {
 export default CreateOrderView;
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: Colors.grayF5,
+  },
+  contentContainer: {
+    paddingHorizontal: scaleModerate(16),
+    paddingBottom: scaleModerate(20),
+  },
+  section: {
+    backgroundColor: Colors.whiteFF,
+    borderRadius: scaleModerate(16),
+    padding: scaleModerate(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    ...DefaultStyles.textMedium14Black,
+    marginBottom: scaleModerate(12),
+    color: Colors.black1B,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scaleModerate(12),
+  },
+  locationInput: {
+    flex: 1,
+  },
+  mapButton: {
+    width: scaleModerate(56),
+    height: scaleModerate(56),
+    borderRadius: scaleModerate(16),
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  mapIcon: {
+    fontSize: 28,
+  },
   imagesWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: scaleModerate(12),
   },
   imageBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
+    width: scaleModerate(78),
+    height: scaleModerate(78),
+    borderRadius: scaleModerate(12),
     borderWidth: 1,
     borderColor: Colors.border01,
-    justifyContent: 'center',
-    alignItems: 'center',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -307,28 +371,60 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   addBox: {
-    backgroundColor: Colors.whiteAE,
+    backgroundColor: Colors.grayF5,
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    borderColor: Colors.primary300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  image: {
-    width: 36,
-    height: 36,
-    marginBottom: 4,
+  addBoxContent: {
+    alignItems: 'center',
+    gap: scaleModerate(4),
+  },
+  addIcon: {
+    fontSize: 32,
   },
   deleteBtn: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    top: scaleModerate(6),
+    right: scaleModerate(6),
+    backgroundColor: Colors.redFD,
+    borderRadius: scaleModerate(14),
+    width: scaleModerate(22),
+    height: scaleModerate(22),
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 5,
   },
   deleteText: {
-    color: '#fff',
-    fontSize: 16,
+    color: Colors.whiteFF,
+    fontSize: 20,
     fontWeight: 'bold',
-    lineHeight: 20,
+    lineHeight: 24,
+  },
+  bottomBar: {
+    borderTopLeftRadius: scaleModerate(24),
+    borderTopRightRadius: scaleModerate(24),
+    paddingTop: scaleModerate(16),
+
+    paddingHorizontal: scaleModerate(16),
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scaleModerate(12),
+  },
+  priceText: {
+    ...DefaultStyles.textBold16Black,
+    color: Colors.green34,
+  },
+  submitButton: {
+    marginHorizontal: 0,
   },
 });

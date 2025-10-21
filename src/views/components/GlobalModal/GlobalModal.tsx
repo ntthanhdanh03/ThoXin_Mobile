@@ -59,6 +59,8 @@ const GlobalModal = () => {
 
   return (
     <Modal
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
       isVisible={modalVisible}
       style={styles.modal}
       onModalHide={() => {

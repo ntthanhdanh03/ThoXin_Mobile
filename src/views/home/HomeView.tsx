@@ -16,6 +16,7 @@ import { img_default_avatar } from '../../assets';
 import Spacer from '../components/Spacer';
 import { scaleModerate } from '../../styles/scaleDimensions';
 import { getLocationPartnerAction } from '../../store/actions/locationAction';
+import Input from '../components/Input';
 
 const HomeView = () => {
   const navigation = useNavigation();

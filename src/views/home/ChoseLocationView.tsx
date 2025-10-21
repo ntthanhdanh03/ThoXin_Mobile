@@ -17,34 +17,32 @@ import Spacer from '../components/Spacer';
 import { ic_chevron_left } from '../../assets';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { Colors } from '../../styles/Colors';
+import { scaleModerate } from '../../styles/scaleDimensions';
 
 Mapbox.setAccessToken(
   'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A',
 );
-// ================== CONSTANT ==================
+
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A';
 
-// ================== MAIN COMPONENT ==================
 const ChoseLocationView = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { onSelectAddress } = route.params || {};
 
-  // refs
   const cameraRef = useRef<Mapbox.Camera>(null);
   const mapRef = useRef<Mapbox.MapView>(null);
 
-  // state
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null,
   );
   const [centerCoord, setCenterCoord] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<string>('');
 
-  // ================== EFFECT: LOCATION ==================
   useEffect(() => {
     let watchId: number | null = null;
+    let isFirstLocation = true;
 
     const requestPermission = async () => {
       if (Platform.OS === 'android') {
@@ -64,7 +62,16 @@ const ChoseLocationView = () => {
             pos.coords.latitude,
           ];
           setUserLocation(coords);
-          cameraRef.current?.moveTo(coords, 500);
+
+          // Chỉ zoom vào lần đầu tiên
+          if (isFirstLocation) {
+            cameraRef.current?.setCamera({
+              centerCoordinate: coords,
+              zoomLevel: 15,
+              animationDuration: 1000,
+            });
+            isFirstLocation = false;
+          }
         },
         err => console.error(err),
         {
@@ -82,7 +89,6 @@ const ChoseLocationView = () => {
     };
   }, []);
 
-  // ================== HANDLERS ==================
   const fetchAddress = async (lng: number, lat: number) => {
     try {
       const res = await fetch(
@@ -92,10 +98,11 @@ const ChoseLocationView = () => {
       if (json.features?.length > 0) {
         setAddress(json.features[0].place_name);
       } else {
-        setAddress('');
+        setAddress('Đang tải địa chỉ...');
       }
     } catch (err) {
       console.error(err);
+      setAddress('Không thể tải địa chỉ');
     }
   };
 
@@ -112,7 +119,11 @@ const ChoseLocationView = () => {
 
   const moveToUserLocation = () => {
     if (cameraRef.current && userLocation) {
-      cameraRef.current.flyTo(userLocation, 1000);
+      cameraRef.current.setCamera({
+        centerCoordinate: userLocation,
+        zoomLevel: 16,
+        animationDuration: 1000,
+      });
     }
   };
 
@@ -123,7 +134,7 @@ const ChoseLocationView = () => {
     }
     navigation.goBack();
   };
-  // ================== RENDER ==================
+
   return (
     <View style={styles.page}>
       {/* Map */}
@@ -136,116 +147,179 @@ const ChoseLocationView = () => {
         <Mapbox.UserLocation visible={true} />
       </Mapbox.MapView>
 
-      {/* Marker */}
-      <View style={styles.centerMarker} />
+      <View style={styles.markerContainer}>
+        <View style={styles.pinTop}>
+          <Text style={styles.pinIcon}>📍</Text>
+        </View>
+        <View style={styles.pinShadow} />
+      </View>
 
-      {/* Button: My Location */}
-      <TouchableOpacity
-        style={styles.myLocationBtn}
-        onPress={moveToUserLocation}
-      >
-        <Text style={{ color: '#fff' }}>Vị trí của tôi</Text>
-      </TouchableOpacity>
-
-      {/* Popup: Address */}
-      <View style={styles.popup}>
+      <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
         >
           <FastImage source={ic_chevron_left} style={styles.backIcon} />
         </TouchableOpacity>
 
-        <Spacer width={10} />
-
-        <View style={styles.addressBox}>
+        <View style={styles.addressCard}>
+          <Text style={styles.addressLabel}>📌 Địa chỉ đã chọn</Text>
           <Text
-            style={{
-              ...DefaultStyles.textBold12Black,
-              maxWidth: 300,
-            }}
-            numberOfLines={1}
+            style={styles.addressText}
+            numberOfLines={2}
             ellipsizeMode="tail"
           >
-            {address}
+            {address || 'Di chuyển bản đồ để chọn địa chỉ'}
           </Text>
         </View>
       </View>
 
-      {/* Confirm Button */}
-      <Button
-        title="Xác nhận"
-        onPress={handleConfirm}
-        containerStyle={styles.confirmBtn}
-      />
+      <TouchableOpacity
+        style={styles.myLocationBtn}
+        onPress={moveToUserLocation}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.locationIcon}>🎯</Text>
+        <Text style={styles.locationText}>Vị trí của tôi</Text>
+      </TouchableOpacity>
+
+      <View style={styles.bottomContainer}>
+        <Button
+          title="Xác nhận địa chỉ"
+          onPress={handleConfirm}
+          containerStyle={styles.confirmBtn}
+        />
+      </View>
     </View>
   );
 };
 
 export default ChoseLocationView;
 
-// ================== STYLES ==================
 const styles = StyleSheet.create({
-  page: { flex: 1 },
+  page: {
+    flex: 1,
+    backgroundColor: Colors.whiteFF,
+  },
   map: { flex: 1 },
 
-  centerMarker: {
+  markerContainer: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginLeft: -9,
-    marginTop: -18,
-    width: 18,
-    height: 18,
-    backgroundColor: 'red',
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#fff',
+    alignItems: 'center',
+  },
+  pinTop: {
+    marginLeft: -20,
+    marginTop: -40,
+    width: 40,
+    height: 40,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pinIcon: {
+    fontSize: 36,
+  },
+  pinShadow: {
+    width: 16,
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    marginTop: 2,
+  },
+
+  header: {
+    position: 'absolute',
+    top: scaleModerate(40),
+    left: scaleModerate(16),
+    right: scaleModerate(16),
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  backBtn: {
+    backgroundColor: Colors.whiteFF,
+    borderRadius: scaleModerate(24),
+    width: scaleModerate(40),
+    height: scaleModerate(40),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  backIcon: {
+    height: scaleModerate(24),
+    width: scaleModerate(24),
+  },
+  addressCard: {
+    flex: 1,
+    backgroundColor: Colors.whiteFF,
+    borderRadius: scaleModerate(16),
+    padding: scaleModerate(16),
+    marginLeft: scaleModerate(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  addressLabel: {
+    ...DefaultStyles.textMedium12Black,
+    color: Colors.gray72,
+    marginBottom: scaleModerate(6),
+  },
+  addressText: {
+    ...DefaultStyles.textMedium14Black,
+    color: Colors.black1B,
+    lineHeight: 20,
   },
 
   myLocationBtn: {
     position: 'absolute',
-    right: 20,
-    bottom: 120,
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-
-  popup: {
-    position: 'absolute',
-    top: 30,
-    left: 10,
-    right: 20,
-    padding: 12,
+    right: scaleModerate(16),
+    bottom: scaleModerate(100),
+    backgroundColor: Colors.whiteFF,
     flexDirection: 'row',
-  },
-
-  backBtn: {
-    backgroundColor: Colors.whiteAE,
-    borderRadius: 30,
-    padding: 5,
-  },
-  backIcon: {
-    height: 24,
-    width: 24,
-    alignSelf: 'center',
-    justifyContent: 'center',
-  },
-
-  addressBox: {
-    backgroundColor: Colors.whiteAE,
-    borderRadius: 20,
-    padding: 5,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: scaleModerate(16),
+    paddingVertical: scaleModerate(12),
+    borderRadius: scaleModerate(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  locationIcon: {
+    fontSize: 20,
+    marginRight: scaleModerate(8),
+  },
+  locationText: {
+    ...DefaultStyles.textMedium14Black,
+    color: Colors.primary,
   },
 
-  confirmBtn: {
+  bottomContainer: {
     position: 'absolute',
-    bottom: 30,
-    left: 20,
-    right: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingTop: scaleModerate(16),
+    paddingBottom: scaleModerate(30),
+    paddingHorizontal: scaleModerate(16),
+    borderTopLeftRadius: scaleModerate(24),
+    borderTopRightRadius: scaleModerate(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  confirmBtn: {
+    marginTop: 0,
   },
 });

@@ -31,14 +31,9 @@ const ActivityView = () => {
     navigation.navigate('DetailActivityView', { item });
   };
 
-  const handleNavigationAppointment = (item: any) => {
-   
-    if (item.status === 6) {
-      navigation.navigate(...([`AppointmentView`, { item }] as never));
-    } else {
-      console.log('123');
-      // navigation.navigate(...([`AppointmentInProgressView`] as never));
-    }
+  const handleNavigationAppointmentHistory = (item: any) => {};
+  const handleNavigationAppointmentInProcessing = (item: any) => {
+    navigation.navigate(...([`AppointmentInProgressView`] as never));
   };
 
   const getStatusColor = (status: string) => {
@@ -46,7 +41,7 @@ const ActivityView = () => {
       pending: '#FF9500',
       completed: '#30D158',
       cancelled: '#FF3B30',
-      default: '#8E8E93',
+      processing: '#3f82cfff',
     };
     return statusColors[status?.toLowerCase()] || statusColors.default;
   };
@@ -54,7 +49,8 @@ const ActivityView = () => {
   const getStatusText = (status: string) => {
     const statusTexts: any = {
       pending: 'Chờ bạn chọn Thợ',
-      completed: 'Tiến hành thành công',
+      processing: 'Xem tiến trình',
+      completed: 'Xem chi tiết',
       cancelled: 'Đã hủy',
     };
     return statusTexts[status?.toLowerCase()] || status;
@@ -123,11 +119,20 @@ const ActivityView = () => {
           <Text style={DefaultStyles.textRegular13Gray}>
             #{item._id?.slice(-6)}
           </Text>
+          <TouchableOpacity style={styles.viewButton} onPress={() => ''}>
+            <Text style={styles.viewButtonText}>Xem cuộc hẹn</Text>
+          </TouchableOpacity>
+        </View>
+      ) : item.status === 'processing' ? (
+        <View style={styles.cardFooter}>
+          <Text style={DefaultStyles.textRegular13Gray}>
+            #{item._id?.slice(-6)}
+          </Text>
           <TouchableOpacity
             style={styles.viewButton}
-            onPress={() => handleNavigationAppointment(item)}
+            onPress={() => handleNavigationAppointmentInProcessing(item)}
           >
-            <Text style={styles.viewButtonText}>Xem cuộc hẹn</Text>
+            <Text style={styles.viewButtonText}>Xem tiến trình</Text>
           </TouchableOpacity>
         </View>
       ) : null}

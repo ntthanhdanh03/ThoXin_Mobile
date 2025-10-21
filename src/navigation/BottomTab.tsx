@@ -219,6 +219,8 @@ const styles = StyleSheet.create({
     paddingTop: scaleModerate(10),
     paddingBottom: scaleModerate(20),
     paddingHorizontal: scaleModerate(10),
+    borderTopWidth: 1,
+    borderColor: Colors.border01,
     backgroundColor: Colors.whiteFC,
     ...DefaultStyles.shadow,
   },

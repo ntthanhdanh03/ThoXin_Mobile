@@ -5,12 +5,12 @@ import {
   TextInputProps,
   View,
   ViewStyle,
+  TextStyle,
 } from 'react-native';
-import React, { useState } from 'react';
+import React from 'react';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { scaleModerate } from '../../styles/scaleDimensions';
 import { Colors } from '../../styles/Colors';
-import Spacer from './Spacer';
 
 interface IInput extends TextInputProps {
   title?: string;
@@ -18,22 +18,18 @@ interface IInput extends TextInputProps {
   message?: string;
   containerStyle?: ViewStyle;
   area?: boolean;
+  inputStyle?: TextStyle;
 }
+
 const Input = (props: IInput) => {
   return (
     <View style={[props?.containerStyle]}>
       <View
         style={[
           styles.wrapInput,
-          props?.editable === false && {
-            borderColor: '#706f6f',
-          },
-          props?.error && {
-            borderColor: Colors.redFD,
-          },
-          props?.area && {
-            height: scaleModerate(100),
-          },
+          props?.editable === false && { borderColor: '#706f6f' },
+          props?.error && { borderColor: Colors.redFD },
+          props?.area && { height: scaleModerate(100) },
         ]}
       >
         {props?.title && (
@@ -41,9 +37,7 @@ const Input = (props: IInput) => {
             <Text
               style={[
                 styles.title,
-                props?.editable === false && {
-                  color: '#706f6f',
-                },
+                props?.editable === false && { color: '#706f6f' },
               ]}
             >
               {props?.title}
@@ -57,22 +51,22 @@ const Input = (props: IInput) => {
           editable={props?.editable !== false}
           style={[
             styles.input,
-            Boolean(props?.title) && {
-              marginTop: scaleModerate(15),
-              fontSize: scaleModerate(13),
+            {
+              marginTop: props?.title ? scaleModerate(15) : 0,
+              fontSize: props?.title ? scaleModerate(13) : scaleModerate(14),
             },
-            props?.editable === false && {
-              color: '#706f6f',
-            },
+            props?.editable === false && { color: '#706f6f' },
             props?.area && {
               height: scaleModerate(70),
-              marginTop: scaleModerate(15),
+              marginTop: props?.title ? scaleModerate(15) : 0,
               textAlignVertical: 'top',
             },
+            props?.inputStyle,
           ]}
           {...props}
         />
       </View>
+
       {props?.message && <Text style={styles.message}>{props?.message}</Text>}
     </View>
   );
@@ -96,20 +90,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.whiteE6,
     backgroundColor: Colors.whiteFF,
     paddingHorizontal: scaleModerate(10),
-    marginHorizontal: 0,
-  },
-  leftIcon: {
-    width: scaleModerate(20),
-    height: scaleModerate(20),
-    marginLeft: scaleModerate(14),
   },
   input: {
     flex: 1,
-    ...DefaultStyles.textMedium12Black,
-  },
-  rightIcon: {
-    width: scaleModerate(18),
-    height: scaleModerate(18),
+    ...DefaultStyles.textRegular14Black,
   },
   message: {
     marginTop: scaleModerate(5),

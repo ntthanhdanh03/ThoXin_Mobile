@@ -104,6 +104,20 @@ const ProfileView = () => {
                 <Text style={styles.text}>{t('Thông tin cá nhân')}</Text>
                 <FastImage source={ic_balence} style={styles.rightIcon} />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => {
+                  navigation.navigate('PromotionView' as never);
+                }}
+              >
+                <View
+                  style={[styles.iconRow, { backgroundColor: Colors.whiteE5 }]}
+                >
+                  <FastImage source={ic_balence} style={styles.icon} />
+                </View>
+                <Text style={styles.text}>{t('Mã khuyến mãi')}</Text>
+                <FastImage source={ic_balence} style={styles.rightIcon} />
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.row}

@@ -37,7 +37,6 @@ export const UploadPhoto = async (
       const file = response.data.result.files.file[0];
       const uploadedFile = {
         ...file,
-        // url: `http://192.168.1.13:3000/upload/${file.name}`,
         url: `${BASE_URL}/upload/${file.name}`,
       };
       console.log('UploadPhoto - Success:', uploadedFile);

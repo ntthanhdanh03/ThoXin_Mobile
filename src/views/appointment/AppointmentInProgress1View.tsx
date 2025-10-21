@@ -167,7 +167,11 @@ const AppointmentInProgress1View = () => {
 
   const moveToUserLocation = useCallback(() => {
     if (partnerLocation && cameraRef.current) {
-      cameraRef.current.flyTo(partnerLocation, 1000);
+      cameraRef.current.setCamera({
+        centerCoordinate: partnerLocation,
+        zoomLevel: 16,
+        animationDuration: 1000,
+      });
     }
   }, [userLocation]);
 
@@ -202,7 +206,7 @@ const AppointmentInProgress1View = () => {
             >
               <MapboxGL.LineLayer
                 id="routeLine"
-                style={{ lineColor: '#1E88E5', lineWidth: 10 }}
+                style={{ lineColor: '#1E88E5', lineWidth: 6 }}
               />
             </MapboxGL.ShapeSource>
           )}

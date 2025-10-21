@@ -1,4 +1,11 @@
-import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import React, { useEffect, useState } from 'react';
 import FastImage from 'react-native-fast-image';
 import { ic_chevron_down } from '../../assets';
@@ -8,11 +15,10 @@ import { Colors } from '../../styles/Colors';
 import { useTranslation } from 'react-i18next';
 import Picker from './Picker';
 import MultiPicker from './MultiPicker';
-import Spacer from './Spacer';
 
 interface ISelection {
-  title: string;
-  onSelect?: any;
+  title?: string;
+  onSelect?: (value: any) => void;
   data?: Array<{ key: string; name: string; value?: string; origin?: any }>;
   containerStyle?: ViewStyle;
   hasSearch?: boolean;
@@ -21,19 +27,20 @@ interface ISelection {
   error?: boolean;
   multiple?: boolean;
   keyValues?: Array<string> | null | undefined;
+  textStyle?: TextStyle; // 👈 thêm prop để truyền style text
 }
+
 const Selection = (props: ISelection) => {
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedItems, setSelectedItems] = useState<any>([]);
 
+  // --- Single select ---
   useEffect(() => {
-    if (props?.keyValue && props?.data && props?.data?.length > 0) {
-      if (selectedItem?.key !== props?.keyValue) {
-        const foundItem = props?.data?.find(
-          item => item.key === props?.keyValue,
-        );
+    if (props?.keyValue && props?.data?.length) {
+      const foundItem = props?.data?.find(item => item.key === props?.keyValue);
+      if (foundItem && foundItem?.key !== selectedItem?.key) {
         setSelectedItem(foundItem);
       }
     } else {
@@ -41,14 +48,13 @@ const Selection = (props: ISelection) => {
     }
   }, [props?.keyValue, props?.data]);
 
+  // --- Multiple select ---
   useEffect(() => {
-    if (props?.keyValues && props?.data && props?.data?.length > 0) {
-      if (selectedItems?.length !== props?.keyValues?.length) {
-        const foundItems = props?.data?.filter(item =>
-          props?.keyValues?.includes(item.key),
-        );
-        setSelectedItems(foundItems);
-      }
+    if (props?.keyValues && props?.data?.length) {
+      const foundItems = props?.data?.filter(item =>
+        props?.keyValues?.includes(item.key),
+      );
+      setSelectedItems(foundItems);
     } else {
       setSelectedItems([]);
     }
@@ -63,21 +69,28 @@ const Selection = (props: ISelection) => {
       )}
 
       <Pressable
-        onPress={() => {
-          setShowPicker(true);
-        }}
-        style={[styles.wrap, props?.error ? { borderColor: Colors.redFD } : {}]}
+        onPress={() => setShowPicker(true)}
+        style={[
+          styles.wrap,
+          {
+            paddingTop: props?.title ? scaleModerate(14) : 0,
+          },
+          props?.error && { borderColor: Colors.redFD },
+        ]}
       >
         {props?.multiple ? (
-          <Text numberOfLines={1} style={styles.text}>
+          <Text numberOfLines={1} style={[styles.text, props?.textStyle]}>
             {selectedItems?.map((item: any) => item?.name).join(', ') || ''}
           </Text>
         ) : (
-          <Text style={styles.text}>{selectedItem?.name || ''}</Text>
+          <Text style={[styles.text, props?.textStyle]}>
+            {selectedItem?.name || ''}
+          </Text>
         )}
 
         <FastImage source={ic_chevron_down} style={styles.icon} />
       </Pressable>
+
       {props?.multiple ? (
         <MultiPicker
           isVisible={showPicker}
@@ -103,9 +116,7 @@ const Selection = (props: ISelection) => {
             setShowPicker(false);
             props?.onSelect && props?.onSelect(item);
           }}
-          onClose={() => {
-            setShowPicker(false);
-          }}
+          onClose={() => setShowPicker(false)}
           hasSearch={props?.hasSearch}
           containerStyle={props?.pickerStyle}
         />
@@ -125,7 +136,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border01,
     backgroundColor: Colors.whiteFF,
     alignItems: 'center',
-    paddingTop: 14,
   },
   icon: {
     width: scaleModerate(20),

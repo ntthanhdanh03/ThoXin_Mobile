@@ -3,6 +3,7 @@ import { AppState, DeviceEventEmitter, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import messaging from '@react-native-firebase/messaging';
 import {
   getMessaging,
   FirebaseMessagingTypes,
@@ -32,6 +33,7 @@ import {
 } from '../utils/notificationUtils';
 import SocketUtil from '../utils/socketUtil';
 import '../utils/appStateUtil';
+import RatingModal from './RatingModal';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +50,9 @@ const RootNavigator = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [notif, setNotif] = useState<NotificationState>({ visible: false });
   const [prevUserState, setPrevUserState] = useState<any>(null);
+
+  const [ratingVisible, setRatingVisible] = useState(false);
+  const [ratingData, setRatingData] = useState<any>();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -104,6 +109,7 @@ const RootNavigator = () => {
           dispatch(getAppointmentAction({ clientId: data.clientId }));
         },
       },
+
       {
         name: 'chat.newMessage',
         handler: (event: any) => {
@@ -116,6 +122,23 @@ const RootNavigator = () => {
           dispatch(getLocationPartnerAction({ partnerId: event.partnerId }));
         },
       },
+
+      {
+        name: 'appointment.updateComplete',
+        handler: (event: any) => {
+          dispatch(
+            getAppointmentAction(
+              { clientId: event?.appointment?.clientId },
+              (data: any) => {
+                if (data) {
+                  setRatingData(event?.appointment);
+                  setRatingVisible(true);
+                }
+              },
+            ),
+          );
+        },
+      },
     ];
 
     const subscriptions = listeners.map(({ name, handler }) =>
@@ -125,44 +148,40 @@ const RootNavigator = () => {
     return () => subscriptions.forEach(sub => sub.remove());
   }, [dispatch]);
 
-  // Setup notifications and user data
   useEffect(() => {
-    if (!authData || prevUserState !== null) return;
+    if (!authData) return;
+    if (prevUserState !== null) return;
+    const userId = authData?.user?._id;
+    initNotificationConfig((installationData: any) => {
+      handleCreateInstallation(authData, installationData);
+      SocketUtil.connect(userId, 'client');
+      getMessaging().onMessage(
+        (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+          console.log('Foreground notification:', remoteMessage);
+          setNotif({
+            visible: true,
+            title: remoteMessage.notification?.title,
+            message: remoteMessage.notification?.body,
+          });
+        },
+      );
+    });
 
-    const setupNotifications = async () => {
-      const userId = authData?.user?._id;
+    handleOrder(userId);
+    dispatch(getAppointmentAction({ clientId: userId }));
 
-      initNotificationConfig((installationData: any) => {
-        handleCreateInstallation(authData, installationData);
-        SocketUtil.connect(userId, 'client');
-
-        const unsubscribe = getMessaging().onMessage(
-          (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-            setNotif({
-              visible: true,
-              title: remoteMessage.notification?.title,
-              message: remoteMessage.notification?.body,
-            });
-          },
-        );
-      });
-
-      handleOrder(userId);
-      dispatch(getAppointmentAction({ clientId: userId }));
-    };
-
-    setupNotifications();
     setPrevUserState(authData);
   }, [authData, dispatch]);
 
-  // Handle app foreground/background
   useEffect(() => {
     const userId = authData?.user?._id;
     if (!userId) return;
 
     const handleForeground = () => {
-      dispatch(getAppointmentAction({ clientId: userId }));
-      handleOrder(userId);
+      if (authData) {
+        dispatch(getAppointmentAction({ clientId: userId }));
+        handleOrder(userId);
+      }
     };
 
     const subForeground = DeviceEventEmitter.addListener(
@@ -172,9 +191,7 @@ const RootNavigator = () => {
 
     const subBackground = DeviceEventEmitter.addListener(
       'APP_BACKGROUND',
-      () => {
-        // Background logic
-      },
+      () => {},
     );
 
     return () => {
@@ -183,7 +200,6 @@ const RootNavigator = () => {
     };
   }, [authData, dispatch]);
 
-  // Create device installation
   const handleCreateInstallation = async (
     userData: any,
     installationData: any,
@@ -228,6 +244,12 @@ const RootNavigator = () => {
           )}
         </Stack.Navigator>
       </NavigationContainer>
+
+      <RatingModal
+        visible={ratingVisible}
+        data={ratingData}
+        onClose={() => setRatingVisible(false)}
+      />
 
       <NotificationModal
         visible={notif.visible}

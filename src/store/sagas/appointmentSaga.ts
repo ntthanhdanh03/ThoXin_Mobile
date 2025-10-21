@@ -50,7 +50,47 @@ function* updateAppointmentSaga({
   }
 }
 
+function* rateAppointmentSaga({
+  payload,
+  callback,
+}: ReturnType<typeof actions.rateAppointmentAction>) {
+  try {
+    const response: IResponse = yield call(() => api.post(`/rates/`, payload));
+    if (response && response?.status === 201 && response?.data) {
+      callback && callback(response?.data, null);
+    } else {
+      callback && callback(null, 'failure');
+    }
+  } catch (e: any) {
+    console.log('rateAppointmentSaga', e, e?.response);
+    callback && callback(null, 'failure');
+  }
+}
+function* getPromotionSaga({
+  payload,
+  callback,
+}: ReturnType<typeof actions.getPromotionAction>) {
+  try {
+    const response: IResponse = yield call(() =>
+      api.get(`/promotions/client/${payload.clientId}`),
+    );
+    console.log('***getPromotionSaga', response);
+    if (response && response?.status === 200 && response?.data) {
+      callback && callback(response?.data, null);
+    } else {
+      callback && callback(null, 'failure');
+    }
+  } catch (e: any) {
+    console.log('getAppointmentSaga', e, e?.response);
+    callback && callback(null, 'failure');
+  }
+}
+
 export default function* appointmentSaga() {
-  yield all([takeLatest(types.GET_APPOINTMENT, getAppointmentSaga)]);
-  yield all([takeLatest(types.UPDATE_APPOINTMENT, updateAppointmentSaga)]);
+  yield all([
+    takeLatest(types.GET_APPOINTMENT, getAppointmentSaga),
+    takeLatest(types.UPDATE_APPOINTMENT, updateAppointmentSaga),
+    takeLatest(types.RATE_APPOINTMENT, rateAppointmentSaga),
+    takeLatest(types.GET_PROMOTION, getPromotionSaga),
+  ]);
 }

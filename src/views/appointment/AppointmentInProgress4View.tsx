@@ -75,7 +75,7 @@ const AppointmentInProgress4View = () => {
         <Spacer height={10} />
 
         <Input
-          title="Mô tả vấn đề của Khách"
+          title="Mô tả trạng thái sau cùng"
           area
           value={APPOINTMENT_UPDATE_IN_PROGRESS?.afterImages?.note}
           editable={false}

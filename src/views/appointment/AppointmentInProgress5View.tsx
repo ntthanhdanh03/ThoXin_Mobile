@@ -1,12 +1,6 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,7 +16,6 @@ import { getAppointmentAction } from '../../store/actions/appointmentAction';
 const AppointmentInProgress5View = () => {
   const navigation = useNavigation();
   const { data: authData } = useSelector((store: any) => store.auth);
-
   const dispatch = useDispatch();
   const route = useRoute<any>();
   const { data: appointmentData } = useSelector(
@@ -31,17 +24,28 @@ const AppointmentInProgress5View = () => {
 
   const appointmentInProgress = appointmentData?.appointmentInProgress?.[0];
 
+  // 🔔 Lắng nghe socket cập nhật thanh toán
   useEffect(() => {
     const handleTopUpSuccess = (payload: any) => {
-      dispatch(getAppointmentAction({ clientId: authData?.user?._id }));
+      dispatch(
+        getAppointmentAction({ clientId: authData?.user?._id }, (data: any) => {
+          if (data) {
+            navigation.navigate(...([`BottomTab`] as never));
+          }
+        }),
+      );
     };
     SocketUtil.on('transaction.paid_appointment.success', handleTopUpSuccess);
 
     return () => {
-      SocketUtil.off('transaction.top_up.success', handleTopUpSuccess);
+      SocketUtil.off(
+        'transaction.paid_appointment.success',
+        handleTopUpSuccess,
+      );
     };
   }, []);
 
+  // 🧮 Tính tổng tiền sau khi cộng thêm issue & trừ khuyến mãi
   const totalAmount = useMemo(() => {
     if (!appointmentInProgress) return 0;
 
@@ -53,6 +57,10 @@ const AppointmentInProgress5View = () => {
         0,
       );
       total += additionalCost;
+    }
+
+    if (appointmentInProgress.promotionDiscount) {
+      total -= appointmentInProgress.promotionDiscount;
     }
 
     return total;
@@ -67,7 +75,9 @@ const AppointmentInProgress5View = () => {
         showsVerticalScrollIndicator={false}
       >
         <Spacer height={24} />
+
         <View style={styles.summaryCard}>
+          {/* Header */}
           <View style={styles.cardHeader}>
             <FastImage
               source={ic_balence}
@@ -83,11 +93,13 @@ const AppointmentInProgress5View = () => {
           <View style={styles.costRow}>
             <Text style={styles.costLabel}>Chi phí lao động</Text>
             <Text style={styles.costValue}>
-              {(appointmentInProgress.laborCost || 0).toLocaleString('vi-VN')} đ
+              {(appointmentInProgress?.laborCost || 0).toLocaleString('vi-VN')}{' '}
+              đ
             </Text>
           </View>
 
-          {appointmentInProgress.additionalIssues?.length > 0 && (
+          {/* Additional Issues */}
+          {appointmentInProgress?.additionalIssues?.length > 0 && (
             <>
               <Spacer height={12} />
               <View style={styles.divider} />
@@ -104,9 +116,7 @@ const AppointmentInProgress5View = () => {
                     </View>
                     {index <
                       appointmentInProgress.additionalIssues.length - 1 && (
-                      <>
-                        <Spacer height={12} />
-                      </>
+                      <Spacer height={12} />
                     )}
                   </View>
                 ),
@@ -114,10 +124,31 @@ const AppointmentInProgress5View = () => {
             </>
           )}
 
+          {/* --- Promotion (optional) --- */}
+          {appointmentInProgress?.promotionCode ? (
+            <>
+              <Spacer height={16} />
+              <View style={styles.divider} />
+              <Spacer height={16} />
+              <View style={styles.costRow}>
+                <Text style={styles.costLabel}>
+                  Khuyến mãi ({appointmentInProgress.promotionCode})
+                </Text>
+                <Text style={[styles.costValue, { color: Colors.primary }]}>
+                  -
+                  {(
+                    appointmentInProgress.promotionDiscount || 0
+                  ).toLocaleString('vi-VN')}{' '}
+                  đ
+                </Text>
+              </View>
+            </>
+          ) : null}
+
+          {/* --- Total --- */}
           <Spacer height={16} />
           <View style={styles.divider} />
           <Spacer height={16} />
-
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalAmount}>
@@ -128,12 +159,13 @@ const AppointmentInProgress5View = () => {
 
         <Spacer height={32} />
 
+        {/* --- Status Note --- */}
         <View style={styles.statusBox}>
           <Text style={styles.statusText}>Bạn đã tới bước kề cuối rồi !!!</Text>
           <Spacer height={8} />
           <Text style={styles.statusSubText}>
             Hãy thanh toán số tiền trên với Thợ để hoàn thành yêu cầu của bạn
-            của bạn nhé
+            nhé.
           </Text>
         </View>
 
@@ -149,15 +181,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.black01,
   },
   summaryCard: {
     backgroundColor: Colors.whiteFF,
@@ -218,13 +241,5 @@ const styles = StyleSheet.create({
   },
   statusSubText: {
     ...DefaultStyles.textRegular14Black,
-  },
-  swipeContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  swipeButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
   },
 });

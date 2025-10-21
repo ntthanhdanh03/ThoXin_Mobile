@@ -1,4 +1,11 @@
-import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import React, { useState, useEffect } from 'react';
 import FastImage from 'react-native-fast-image';
 import { ic_calendar } from '../../assets';
@@ -9,7 +16,7 @@ import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 
 interface IDateSelection {
-  title: string;
+  title?: string;
   date?: Date;
   onDateChange?: (date: Date) => void;
   containerStyle?: ViewStyle;
@@ -18,6 +25,7 @@ interface IDateSelection {
   maximumDate?: 'yes';
   message?: string;
   limitDays?: number;
+  dateTextStyle?: TextStyle; // 👈 thêm prop mới
 }
 
 const DateSelection = (props: IDateSelection) => {
@@ -32,7 +40,6 @@ const DateSelection = (props: IDateSelection) => {
   );
 
   useEffect(() => {
-    // Khi props.date thay đổi từ bên ngoài
     if (props.date) {
       setSelectedDate(props.date);
       setDisplayDate(formatDate(props.date, props.mode));
@@ -58,8 +65,15 @@ const DateSelection = (props: IDateSelection) => {
         </View>
       )}
 
-      <Pressable onPress={() => setIsOpen(true)} style={styles.wrap}>
-        <Text style={styles.date}>{displayDate}</Text>
+      <Pressable
+        onPress={() => setIsOpen(true)}
+        style={[
+          styles.wrap,
+          { paddingTop: props.title ? scaleModerate(16) : 0 },
+        ]}
+      >
+        {/* 👇 Cho phép custom style hiển thị ngày */}
+        <Text style={[styles.date, props.dateTextStyle]}>{displayDate}</Text>
         <FastImage source={ic_calendar} style={styles.icon} />
       </Pressable>
 
@@ -92,7 +106,6 @@ export default DateSelection;
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingTop: 16,
     flexDirection: 'row',
     borderWidth: scaleModerate(1),
     height: scaleModerate(54),
@@ -102,14 +115,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon: {
-    width: scaleModerate(20),
-    height: scaleModerate(20),
+    width: scaleModerate(24),
+    height: scaleModerate(24),
     marginRight: scaleModerate(14),
   },
   date: {
     flex: 1,
     marginLeft: scaleModerate(16),
-    ...DefaultStyles.textBold12Black,
+    ...DefaultStyles.textRegular14Black,
   },
   wrapTitle: {
     position: 'absolute',
@@ -126,6 +139,6 @@ const styles = StyleSheet.create({
   message: {
     marginTop: scaleModerate(4),
     marginLeft: scaleModerate(4),
-    ...DefaultStyles.textRegular12Gray,
+    ...DefaultStyles.textRegular13Gray,
   },
 });

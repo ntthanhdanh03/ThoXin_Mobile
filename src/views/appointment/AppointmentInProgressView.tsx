@@ -1,19 +1,29 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+
 import AppointmentInProgress1View from './AppointmentInProgress1View';
 import AppointmentInProgress2View from './AppointmentInProgress2View';
 import AppointmentInProgress3View from './AppointmentInProgress3View';
 import AppointmentInProgress4View from './AppointmentInProgress4View';
 import AppointmentInProgress5View from './AppointmentInProgress5View';
+import LoadingView from '../components/LoadingView';
 
 const AppointmentInProgressView = () => {
   const { data: appointmentData } = useSelector(
     (store: any) => store.appointment,
   );
-  const appointmentInProgress = appointmentData?.appointmentInProgress[0];
+  const appointmentInProgress = appointmentData?.appointmentInProgress?.[0];
+  const navigation = useNavigation();
 
-  if (!appointmentInProgress) return <View style={styles.container} />;
+  useEffect(() => {
+    if (!appointmentInProgress) {
+      navigation.navigate('BottomTab' as never);
+    }
+  }, [appointmentInProgress, navigation]);
+
+  if (!appointmentInProgress) return <LoadingView loading={true} />;
 
   const status = appointmentInProgress.status;
 
