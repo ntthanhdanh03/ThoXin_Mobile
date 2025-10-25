@@ -13,21 +13,45 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import { Colors } from '../styles/Colors';
+import SocketUtil from '../utils/socketUtil';
+import { DefaultStyles } from '../styles/DefaultStyles';
 
 const { height } = Dimensions.get('window');
 
-let modalRef: any = null;
+export interface CallModalProps {
+  type: 'outgoing' | 'incoming';
+  role_Call?: 'client' | 'partner';
+  role_Receiver?: 'client' | 'partner';
 
-const CallModalComponent = forwardRef((props, ref) => {
+  from_userId?: string;
+  form_name?: string;
+  form_avatar?: string;
+
+  to_userId?: string;
+  to_name?: string;
+  to_avatar?: string;
+}
+
+export interface CallModalRef {
+  show: (props: CallModalProps) => void;
+  hide: () => void;
+}
+
+let modalRef: CallModalRef | null = null;
+
+const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
   const [visible, setVisible] = useState(false);
-  const [show, setShow] = useState(false);
+  const [data, setData] = useState<CallModalProps | null>(null);
+  const [callPhase, setCallPhase] = useState<'ringing' | 'inCall'>('ringing');
+
   const translateY = useRef(new Animated.Value(height)).current;
 
   useImperativeHandle(ref, () => ({
-    show: () => {
+    show: (props: CallModalProps) => {
+      setData(props);
       setVisible(true);
-      setShow(true);
       Animated.timing(translateY, {
         toValue: 0,
         duration: 300,
@@ -41,46 +65,147 @@ const CallModalComponent = forwardRef((props, ref) => {
         useNativeDriver: true,
       }).start(() => {
         setVisible(false);
-        setShow(false);
+        setData(null);
+        setCallPhase('ringing');
       });
     },
   }));
 
-  if (!show && !visible) return null;
+  useEffect(() => {
+    SocketUtil.on('call.accepted', payload => {
+      console.log('📞 Cuộc gọi được chấp nhận:', payload);
+      setCallPhase('inCall');
+    });
+
+    return () => {
+      SocketUtil.off('call.accepted');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (data?.type === 'outgoing' && data?.to_userId) {
+      SocketUtil.emit('call.request', {
+        from_userId: data.from_userId,
+        role_Call: data.role_Call,
+        to_userId: data.to_userId,
+        form_name: data.form_name,
+        form_avatar: data.form_avatar,
+      });
+      console.log('📤 Gửi tín hiệu gọi đi tới', data.to_userId);
+    }
+  }, [data]);
+
+  if (!visible || !data) return null;
+
+  const { type, to_name, to_avatar, form_name } = data;
+
+  const callRequestCancel = () => {
+    SocketUtil.emit('call.request_cancel', {
+      to: data.to_userId,
+      role: 'client',
+    });
+
+    modalRef?.hide();
+  };
+
+  const handleAcceptCall = () => {
+    SocketUtil.emit('call.accept', {
+      from_userId: data.to_userId,
+      to_userId: data.from_userId,
+      to_role: 'partner',
+    });
+    setCallPhase('inCall');
+  };
+
+  const handleDeclineCall = () => {
+    if (data.role_Receiver === 'client') {
+      SocketUtil.emit('call.decline', {
+        to: data.from_userId,
+        role: 'client',
+      });
+    } else {
+      SocketUtil.emit('call.decline', {
+        to: data.from_userId,
+        role: 'partner',
+      });
+    }
+    modalRef?.hide();
+  };
 
   return (
     <Animated.View style={[styles.overlay, { transform: [{ translateY }] }]}>
       <View style={styles.container}>
-        <Text style={styles.name}>📞 Cuộc gọi đến</Text>
-        <Text style={styles.sub}>Nguyễn Văn A đang gọi cho bạn...</Text>
+        {callPhase === 'ringing' ? (
+          <>
+            {type === 'incoming' ? (
+              <View>
+                <Text style={styles.btnText}>{form_name}</Text>
+              </View>
+            ) : (
+              <View>
+                <Text style={styles.btnText}>{to_name}</Text>
+              </View>
+            )}
+            {type === 'incoming' ? (
+              <View>
+                <TouchableOpacity
+                  style={[styles.button, styles.accept]}
+                  onPress={() => {
+                    handleDeclineCall();
+                  }}
+                >
+                  <Text style={styles.btnText}>Hủy</Text>
+                </TouchableOpacity>
 
-        <View style={styles.buttons}>
-          <TouchableOpacity
-            style={[styles.button, styles.decline]}
-            onPress={() => modalRef?.hide()}
-          >
-            <Text style={styles.btnText}>Từ chối</Text>
-          </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.accept]}
+                  onPress={() => {
+                    handleAcceptCall();
+                  }}
+                >
+                  <Text style={styles.btnText}>Trả lời</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.buttons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.decline]}
+                  onPress={() => callRequestCancel()}
+                >
+                  <Text style={styles.btnText}>Hủy</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
+        ) : (
+          <>
+            <View>
+              <Text>Trong cuộc gọi</Text>
 
-          <TouchableOpacity
-            style={[styles.button, styles.accept]}
-            onPress={() => {
-              // TODO: điều hướng vào màn hình gọi
-              modalRef?.hide();
-            }}
-          >
-            <Text style={styles.btnText}>Trả lời</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.button, styles.decline]}
+                onPress={() => {
+                  SocketUtil.emit('call.end', {
+                    to_userId: data?.to_userId,
+                    from_userId: data?.from_userId,
+                  });
+                  setCallPhase('ringing');
+                  modalRef?.hide();
+                }}
+              >
+                <Text style={styles.btnText}>Tắt cuộc gọi</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
     </Animated.View>
   );
 });
 
-// API toàn cục
 const CallModal = {
   setRef: (ref: any) => (modalRef = ref),
-  show: () => modalRef?.show(),
+  show: (props: CallModalProps) => modalRef?.show(props),
   hide: () => modalRef?.hide(),
 };
 
@@ -108,15 +233,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.whiteFF,
     paddingHorizontal: 20,
   },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
+    backgroundColor: '#eee',
+  },
   name: {
-    fontSize: 28,
-    color: '#fff',
+    fontSize: 26,
+    color: '#000',
     fontWeight: '700',
     marginBottom: 10,
   },
   sub: {
     fontSize: 16,
-    color: '#ccc',
+    color: '#777',
     marginBottom: 40,
   },
   buttons: {
@@ -137,8 +269,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CD964',
   },
   btnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...DefaultStyles.textBold16Black,
   },
 });

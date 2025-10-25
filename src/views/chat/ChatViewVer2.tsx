@@ -147,7 +147,18 @@ const ChatViewVer2 = () => {
             </View>
             <TouchableOpacity
               onPress={() => {
-                CallModal.show();
+                CallModal.show({
+                  type: 'outgoing',
+                  role_Call: 'client',
+
+                  to_userId: dataRoomChat?.partnerId,
+                  to_name: dataRoomChat?.fullName,
+                  to_avatar: dataRoomChat?.avatarUrl,
+
+                  from_userId: authData?.user?._id,
+                  form_name: authData?.user?.fullName,
+                  form_avatar: authData?.user?.avatarUrl,
+                });
               }}
             >
               <FastImage style={styles.avatar} source={ic_calendar} />

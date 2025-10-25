@@ -141,6 +141,43 @@ const RootNavigator = () => {
           handleOrder(event?.appointment?.clientId);
         },
       },
+
+      {
+        name: 'call.incoming',
+        handler: (data: any) => {
+          console.log('call.incoming', data);
+          CallModal.show({
+            type: 'incoming',
+            role_Receiver: 'client',
+
+            from_userId: data.from_userId,
+            form_name: data?.form_name,
+            form_avatar: data?.form_name,
+            to_userId: data.to_userId,
+          });
+        },
+      },
+      {
+        name: 'call.request_cancel',
+        handler: (data: any) => {
+          console.log('call.request_cancel', data);
+          CallModal.hide();
+        },
+      },
+      {
+        name: 'call.declined',
+        handler: (data: any) => {
+          console.log('call.declined', data);
+          CallModal.hide();
+        },
+      },
+      {
+        name: 'call.ended',
+        handler: (data: any) => {
+          console.log('call.ended', data);
+          CallModal.hide();
+        },
+      },
     ];
 
     const subscriptions = listeners.map(({ name, handler }) =>

@@ -50,6 +50,31 @@ export default class SocketUtil {
     this.socket.on('appointment.updateComplete', (appointment: any) => {
       DeviceEventEmitter.emit('appointment.updateComplete', { appointment });
     });
+
+    this.socket.on('call.incoming', payload => {
+      console.log('📞 Incoming call:', payload);
+      DeviceEventEmitter.emit('call.incoming', payload);
+    });
+
+    this.socket.on('call.request_cancel', payload => {
+      console.log('📞 call.request_cancel', payload);
+      DeviceEventEmitter.emit('call.request_cancel', payload);
+    });
+
+    this.socket.on('call.accepted', payload => {
+      console.log('✅ Call accepted:', payload);
+      DeviceEventEmitter.emit('call.accepted', payload);
+    });
+
+    this.socket.on('call.declined', payload => {
+      console.log('❌ Call declined:');
+      DeviceEventEmitter.emit('call.declined');
+    });
+
+    this.socket.on('call.ended', payload => {
+      console.log('🔚 Call ended:', payload);
+      DeviceEventEmitter.emit('call.ended', payload);
+    });
   }
 
   static on(event: string, callback: (data: any) => void) {
