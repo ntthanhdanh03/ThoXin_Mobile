@@ -31,8 +31,10 @@ const ActivityView = () => {
     navigation.navigate('DetailActivityView', { item });
   };
 
-  const handleNavigationAppointmentHistory = (item: any) => {};
-  const handleNavigationAppointmentInProcessing = (item: any) => {
+  const handleNavigationAppointmentHistory = (item: any) => {
+    navigation.navigate(...([`AppointmentView`, { item }] as never));
+  };
+  const handleNavigationAppointmentInProcessing = () => {
     navigation.navigate(...([`AppointmentInProgressView`] as never));
   };
 
@@ -119,7 +121,10 @@ const ActivityView = () => {
           <Text style={DefaultStyles.textRegular13Gray}>
             #{item._id?.slice(-6)}
           </Text>
-          <TouchableOpacity style={styles.viewButton} onPress={() => ''}>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => handleNavigationAppointmentHistory(item)}
+          >
             <Text style={styles.viewButtonText}>Xem cuộc hẹn</Text>
           </TouchableOpacity>
         </View>
@@ -130,7 +135,7 @@ const ActivityView = () => {
           </Text>
           <TouchableOpacity
             style={styles.viewButton}
-            onPress={() => handleNavigationAppointmentInProcessing(item)}
+            onPress={() => handleNavigationAppointmentInProcessing()}
           >
             <Text style={styles.viewButtonText}>Xem tiến trình</Text>
           </TouchableOpacity>

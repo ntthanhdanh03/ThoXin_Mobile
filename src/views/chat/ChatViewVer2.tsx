@@ -16,12 +16,13 @@ import Spacer from '../components/Spacer';
 import { Colors } from '../../styles/Colors';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { scaleModerate } from '../../styles/scaleDimensions';
-import { ic_chevron_left } from '../../assets';
+import { ic_calendar, ic_chevron_left } from '../../assets';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getMessageAction,
   sendMessageAction,
 } from '../../store/actions/chatAction';
+import CallModal from '../../navigation/CallModal';
 
 const ChatViewVer2 = () => {
   const route = useRoute();
@@ -144,6 +145,13 @@ const ChatViewVer2 = () => {
                 {dataRoomChat?.fullName || 'Thợ'}
               </Text>
             </View>
+            <TouchableOpacity
+              onPress={() => {
+                CallModal.show();
+              }}
+            >
+              <FastImage style={styles.avatar} source={ic_calendar} />
+            </TouchableOpacity>
           </View>
         </View>
         <View style={styles.chatContainer}>

@@ -22,3 +22,7 @@ export const ic_success = require('./icons/ic_success.png');
 export const ic_warning = require('./icons/ic_warning.png');
 export const ic_star = require('./icons/ic_star.png');
 export const ic_star_yellow = require('./icons/ic_star_yellow.png');
+
+export const lottie_delivery = require('./lotties/delivery.json');
+export const lottie_location = require('./lotties/location.json');
+export const lottie_progress = require('./lotties/progress.json');

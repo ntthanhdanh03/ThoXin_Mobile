@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,127 +6,133 @@ import {
   PermissionsAndroid,
   Platform,
   TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import Geolocation from 'react-native-geolocation-service';
 import FastImage from 'react-native-fast-image';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
 import Button from '../components/Button';
-import Spacer from '../components/Spacer';
 import { ic_chevron_left } from '../../assets';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { Colors } from '../../styles/Colors';
 import { scaleModerate } from '../../styles/scaleDimensions';
-
-Mapbox.setAccessToken(
-  'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A',
-);
-
-const MAPBOX_TOKEN =
-  'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A';
+import {
+  MAPVIEW_CONFIG,
+  CAMERA_CONFIG,
+  HCMC_CENTER,
+  HCMC_BOUNDS,
+  fetchAddress,
+  type Coordinate,
+} from '../../utils/mapboxUtils';
 
 const ChoseLocationView = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { onSelectAddress } = route.params || {};
 
-  const cameraRef = useRef<Mapbox.Camera>(null);
   const mapRef = useRef<Mapbox.MapView>(null);
+  const cameraRef = useRef<Mapbox.Camera>(null);
 
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null,
-  );
-  const [centerCoord, setCenterCoord] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinate | null>(null);
+  const [centerCoord, setCenterCoord] = useState<Coordinate | null>(null);
   const [address, setAddress] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchKey = useRef<string>('');
+
+  /** 🧭 Lấy vị trí 1 lần duy nhất khi vào màn hình */
   useEffect(() => {
-    let watchId: number | null = null;
-    let isFirstLocation = true;
-
-    const requestPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Location permission denied');
-          return;
+    const getPermissionAndLocation = async () => {
+      try {
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Location permission denied');
+            setUserLocation(HCMC_CENTER);
+            setLoading(false);
+            return;
+          }
         }
-      }
 
-      watchId = Geolocation.watchPosition(
-        pos => {
-          const coords: [number, number] = [
-            pos.coords.longitude,
-            pos.coords.latitude,
-          ];
-          setUserLocation(coords);
+        Geolocation.getCurrentPosition(
+          pos => {
+            const coords: Coordinate = [
+              pos.coords.longitude,
+              pos.coords.latitude,
+            ];
+            setUserLocation(coords);
+            setLoading(false);
 
-          // Chỉ zoom vào lần đầu tiên
-          if (isFirstLocation) {
+            // ✅ Dùng config từ utils
             cameraRef.current?.setCamera({
               centerCoordinate: coords,
-              zoomLevel: 15,
-              animationDuration: 1000,
+              zoomLevel: CAMERA_CONFIG.zoomLevel,
+              animationDuration: CAMERA_CONFIG.animationDuration,
             });
-            isFirstLocation = false;
-          }
-        },
-        err => console.error(err),
-        {
-          enableHighAccuracy: true,
-          distanceFilter: 1,
-          interval: 2000,
-          fastestInterval: 1000,
-        },
-      );
+          },
+          err => {
+            console.log('Error getting location:', err);
+            setUserLocation(HCMC_CENTER);
+            setLoading(false);
+          },
+          { enableHighAccuracy: true, timeout: 10000 },
+        );
+      } catch (e) {
+        console.error(e);
+        setUserLocation(HCMC_CENTER);
+        setLoading(false);
+      }
     };
 
-    requestPermission();
-    return () => {
-      if (watchId != null) Geolocation.clearWatch(watchId);
-    };
+    getPermissionAndLocation();
   }, []);
 
-  const fetchAddress = async (lng: number, lat: number) => {
-    try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`,
-      );
-      const json = await res.json();
-      if (json.features?.length > 0) {
-        setAddress(json.features[0].place_name);
-      } else {
-        setAddress('Đang tải địa chỉ...');
-      }
-    } catch (err) {
-      console.error(err);
-      setAddress('Không thể tải địa chỉ');
-    }
-  };
+  /** 🧩 Fetch địa chỉ (có kiểm duplicate & debounce) */
+  const handleFetchAddress = useCallback(async (lng: number, lat: number) => {
+    // Kiểm tra duplicate request
+    const key = `${lng.toFixed(5)},${lat.toFixed(5)}`;
+    if (key === lastFetchKey.current) return;
+    lastFetchKey.current = key;
 
-  const handleRegionChange = async () => {
-    if (mapRef.current) {
+    // Gọi utils helper
+    const result = await fetchAddress(lng, lat);
+    setAddress(result);
+  }, []);
+
+  /** 🗺️ Xử lý khi map dừng di chuyển */
+  const handleRegionChange = useCallback(async () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    // ✅ Debounce từ config
+    debounceRef.current = setTimeout(async () => {
+      if (!mapRef.current) return;
+
       const center = await mapRef.current.getCenter();
-      if (center) {
-        const coords: [number, number] = [center[0], center[1]];
-        setCenterCoord(coords);
-        fetchAddress(coords[0], coords[1]);
-      }
-    }
-  };
+      if (!center) return;
 
-  const moveToUserLocation = () => {
-    if (cameraRef.current && userLocation) {
+      const coords: Coordinate = [center[0], center[1]];
+      setCenterCoord(coords);
+      handleFetchAddress(coords[0], coords[1]);
+    }, MAPVIEW_CONFIG.regionDidChangeDebounceTime || 800);
+  }, [handleFetchAddress]);
+
+  /** 🎯 Di chuyển về vị trí của tôi */
+  const moveToUser = () => {
+    if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: userLocation,
-        zoomLevel: 16,
-        animationDuration: 1000,
+        zoomLevel: CAMERA_CONFIG.zoomLevel,
+        animationDuration: CAMERA_CONFIG.animationDuration,
       });
     }
   };
 
+  /** ✅ Xác nhận địa chỉ */
   const handleConfirm = () => {
     if (address && centerCoord && onSelectAddress) {
       const [lng, lat] = centerCoord;
@@ -137,16 +143,49 @@ const ChoseLocationView = () => {
 
   return (
     <View style={styles.page}>
-      {/* Map */}
-      <Mapbox.MapView
-        ref={mapRef}
-        style={styles.map}
-        onRegionDidChange={handleRegionChange}
-      >
-        <Mapbox.Camera ref={cameraRef} zoomLevel={16} />
-        <Mapbox.UserLocation visible={true} />
-      </Mapbox.MapView>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text>Đang lấy vị trí...</Text>
+        </View>
+      ) : (
+        <Mapbox.MapView
+          ref={mapRef}
+          style={styles.map}
+          onRegionDidChange={handleRegionChange}
+          // ✅ Áp dụng config từ utils để giảm tiles
+          styleURL={MAPVIEW_CONFIG.styleURL}
+          compassEnabled={MAPVIEW_CONFIG.compassEnabled}
+          logoEnabled={MAPVIEW_CONFIG.logoEnabled}
+          attributionEnabled={MAPVIEW_CONFIG.attributionEnabled}
+          scaleBarEnabled={MAPVIEW_CONFIG.scaleBarEnabled}
+          pitchEnabled={MAPVIEW_CONFIG.pitchEnabled}
+          rotateEnabled={MAPVIEW_CONFIG.rotateEnabled}
+        >
+          <Mapbox.Camera
+            ref={cameraRef}
+            zoomLevel={CAMERA_CONFIG.zoomLevel}
+            centerCoordinate={userLocation || HCMC_CENTER}
+            minZoomLevel={MAPVIEW_CONFIG.minZoomLevel}
+            maxZoomLevel={MAPVIEW_CONFIG.maxZoomLevel}
+            // ✅ Giới hạn bounds để không pan ra ngoài HCM
+            bounds={{
+              ne: HCMC_BOUNDS.ne,
+              sw: HCMC_BOUNDS.sw,
+            }}
+            padding={{
+              paddingTop: 50,
+              paddingBottom: 50,
+              paddingLeft: 50,
+              paddingRight: 50,
+            }}
+          />
+          <Mapbox.UserLocation visible={true} />
+        </Mapbox.MapView>
+      )}
 
+      {/* 📍 Pin marker */}
       <View style={styles.markerContainer}>
         <View style={styles.pinTop}>
           <Text style={styles.pinIcon}>📍</Text>
@@ -154,6 +193,7 @@ const ChoseLocationView = () => {
         <View style={styles.pinShadow} />
       </View>
 
+      {/* 🔙 Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -165,25 +205,23 @@ const ChoseLocationView = () => {
 
         <View style={styles.addressCard}>
           <Text style={styles.addressLabel}>📌 Địa chỉ đã chọn</Text>
-          <Text
-            style={styles.addressText}
-            numberOfLines={2}
-            ellipsizeMode="tail"
-          >
+          <Text style={styles.addressText} numberOfLines={2}>
             {address || 'Di chuyển bản đồ để chọn địa chỉ'}
           </Text>
         </View>
       </View>
 
+      {/* 🎯 Nút về vị trí của tôi */}
       <TouchableOpacity
         style={styles.myLocationBtn}
-        onPress={moveToUserLocation}
+        onPress={moveToUser}
         activeOpacity={0.8}
       >
         <Text style={styles.locationIcon}>🎯</Text>
         <Text style={styles.locationText}>Vị trí của tôi</Text>
       </TouchableOpacity>
 
+      {/* 🧾 Nút xác nhận */}
       <View style={styles.bottomContainer}>
         <Button
           title="Xác nhận địa chỉ"
@@ -198,11 +236,14 @@ const ChoseLocationView = () => {
 export default ChoseLocationView;
 
 const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: Colors.whiteFF,
-  },
+  page: { flex: 1, backgroundColor: Colors.whiteFF },
   map: { flex: 1 },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   markerContainer: {
     position: 'absolute',
@@ -215,17 +256,14 @@ const styles = StyleSheet.create({
     marginTop: -40,
     width: 40,
     height: 40,
-
     justifyContent: 'center',
     alignItems: 'center',
   },
-  pinIcon: {
-    fontSize: 36,
-  },
+  pinIcon: { fontSize: 36 },
   pinShadow: {
     width: 16,
     height: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: 8,
     marginTop: 2,
   },
@@ -251,10 +289,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  backIcon: {
-    height: scaleModerate(24),
-    width: scaleModerate(24),
-  },
+  backIcon: { height: scaleModerate(24), width: scaleModerate(24) },
+
   addressCard: {
     flex: 1,
     backgroundColor: Colors.whiteFF,
@@ -294,10 +330,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 8,
   },
-  locationIcon: {
-    fontSize: 20,
-    marginRight: scaleModerate(8),
-  },
+  locationIcon: { fontSize: 20, marginRight: scaleModerate(8) },
   locationText: {
     ...DefaultStyles.textMedium14Black,
     color: Colors.primary,
@@ -319,7 +352,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
   },
-  confirmBtn: {
-    marginTop: 0,
-  },
+  confirmBtn: { marginTop: 0 },
 });

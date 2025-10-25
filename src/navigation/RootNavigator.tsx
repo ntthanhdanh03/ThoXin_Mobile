@@ -34,6 +34,7 @@ import {
 import SocketUtil from '../utils/socketUtil';
 import '../utils/appStateUtil';
 import RatingModal from './RatingModal';
+import CallModal, { CallModalComponent } from './CallModal';
 
 const Stack = createNativeStackNavigator();
 
@@ -137,6 +138,7 @@ const RootNavigator = () => {
               },
             ),
           );
+          handleOrder(event?.appointment?.clientId);
         },
       },
     ];
@@ -257,6 +259,8 @@ const RootNavigator = () => {
         message={notif.message}
         onHide={() => setNotif(prev => ({ ...prev, visible: false }))}
       />
+
+      <CallModalComponent ref={ref => CallModal.setRef(ref)} />
     </>
   );
 };

@@ -10,15 +10,13 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Platform,
-  PermissionsAndroid,
-  Linking,
   ActivityIndicator,
+  StatusBar,
+  Linking,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import MapboxGL from '@rnmapbox/maps';
-import Geolocation from 'react-native-geolocation-service';
 import { Colors } from '../../styles/Colors';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import Spacer from '../components/Spacer';
@@ -28,12 +26,104 @@ import {
   ic_chevron_left,
   ic_eye_off,
   img_default_avatar,
+  lottie_delivery,
+  lottie_location,
 } from '../../assets';
 import { getLocationPartnerAction } from '../../store/actions/locationAction';
+import LottieView from 'lottie-react-native';
+import {
+  MAPVIEW_CONFIG,
+  CAMERA_CONFIG,
+  fetchRoute,
+  getDistance,
+  getBounds,
+  type Coordinate,
+} from '../../utils/mapboxUtils';
 
-const MAPBOX_ACCESS_TOKEN =
-  'pk.eyJ1IjoibnR0aGFuaGRhbmgiLCJhIjoiY21ldGhobmRwMDNrcTJscjg5YTRveGU0MyJ9.1-2B8UCQL1fjGqTd60Le9A';
-MapboxGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
+const mapStyles = {
+  routeLine: { lineColor: '#1E88E5', lineWidth: 6 },
+};
+
+const MapContent = React.memo(
+  ({
+    partnerLocation,
+    destination,
+    routeCoordinates,
+    cameraRef,
+  }: {
+    partnerLocation: Coordinate;
+    destination: Coordinate;
+    routeCoordinates: number[][] | null;
+    cameraRef: React.RefObject<MapboxGL.Camera | null>;
+  }) => {
+    return (
+      <MapboxGL.MapView
+        style={styles.map}
+        // ✅ Áp dụng config từ utils
+        styleURL={MAPVIEW_CONFIG.styleURL}
+        compassEnabled={MAPVIEW_CONFIG.compassEnabled}
+        scaleBarEnabled={MAPVIEW_CONFIG.scaleBarEnabled}
+        logoEnabled={MAPVIEW_CONFIG.logoEnabled}
+        attributionEnabled={MAPVIEW_CONFIG.attributionEnabled}
+        pitchEnabled={MAPVIEW_CONFIG.pitchEnabled}
+        rotateEnabled={MAPVIEW_CONFIG.rotateEnabled}
+      >
+        <MapboxGL.Camera
+          ref={cameraRef}
+          animationMode="none"
+          minZoomLevel={MAPVIEW_CONFIG.minZoomLevel}
+          maxZoomLevel={MAPVIEW_CONFIG.maxZoomLevel}
+        />
+
+        {/* Route - update sau */}
+        {routeCoordinates && routeCoordinates.length > 0 && (
+          <MapboxGL.ShapeSource
+            id="routeSource"
+            shape={{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates,
+              },
+            }}
+          >
+            <MapboxGL.LineLayer id="routeLine" style={mapStyles.routeLine} />
+          </MapboxGL.ShapeSource>
+        )}
+
+        {/* ✅ Partner marker - update ngay lập tức */}
+        {partnerLocation && (
+          <MapboxGL.MarkerView id="partnerMarker" coordinate={partnerLocation}>
+            <LottieView
+              source={lottie_delivery}
+              autoPlay
+              loop
+              style={{
+                width: 80,
+                height: 80,
+              }}
+            />
+          </MapboxGL.MarkerView>
+        )}
+
+        {destination && (
+          <MapboxGL.MarkerView id="destinationMarker" coordinate={destination}>
+            <LottieView
+              source={lottie_location}
+              autoPlay
+              loop
+              style={{
+                width: 36,
+                height: 36,
+              }}
+            />
+          </MapboxGL.MarkerView>
+        )}
+      </MapboxGL.MapView>
+    );
+  },
+);
 
 const AppointmentInProgress1View = () => {
   const navigation = useNavigation();
@@ -50,12 +140,15 @@ const AppointmentInProgress1View = () => {
   const phoneNumber = appointment?.partnerId?.phoneNumber;
 
   const cameraRef = useRef<MapboxGL.Camera>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+
+  const lastRouteLocationRef = useRef<Coordinate | null>(null);
+  const initialCameraSetRef = useRef(false);
+  const fetchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRouteFetchingRef = useRef(false);
+
+  const [partnerLocation, setPartnerLocation] = useState<Coordinate | null>(
     null,
   );
-  const [partnerLocation, setPartnerLocation] = useState<
-    [number, number] | null
-  >(null);
   const [routeCoordinates, setRouteCoordinates] = useState<number[][] | null>(
     null,
   );
@@ -63,174 +156,181 @@ const AppointmentInProgress1View = () => {
 
   const appointmentInProgress = appointmentData?.appointmentInProgress?.[0];
 
-  const destination: [number, number] | null = useMemo(() => {
+  const destination: Coordinate | null = useMemo(() => {
     if (!order?.longitude || !order?.latitude) return null;
     const lng = parseFloat(order.longitude);
     const lat = parseFloat(order.latitude);
     return !isNaN(lng) && !isNaN(lat) ? [lng, lat] : null;
-  }, [order]);
+  }, [order?.longitude, order?.latitude]);
+
+  const partnerId = useMemo(
+    () => appointmentInProgress?.partnerId?._id,
+    [appointmentInProgress?.partnerId?._id],
+  );
+
+  // ✅ Polling location (giữ nguyên)
   useEffect(() => {
-    dispatch(
-      getLocationPartnerAction({
-        partnerId: appointmentInProgress.partnerId._id,
-      }),
-    );
-  }, []);
+    if (!partnerId || !isFocused) return;
 
-  useEffect(() => {
-    if (locationPartner?.latitude && locationPartner?.longitude) {
-      setPartnerLocation([locationPartner.longitude, locationPartner.latitude]);
-    }
-  }, [locationPartner]);
-
-  useEffect(() => {
-    if (!isFocused) return;
-    let watchId: number | null = null;
-
-    const requestPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          setLoading(false);
-          return;
-        }
-      }
-
-      watchId = Geolocation.watchPosition(
-        pos => {
-          setUserLocation([pos.coords.longitude, pos.coords.latitude]);
-        },
-        err => {
-          console.error('📍 Location error:', err);
-          setLoading(false);
-        },
-        {
-          enableHighAccuracy: true,
-          distanceFilter: 10,
-          interval: 5000,
-          fastestInterval: 3000,
-        },
-      );
+    const pollLocation = () => {
+      dispatch(getLocationPartnerAction({ partnerId }));
     };
 
-    requestPermission();
-    return () => {
-      if (watchId != null) Geolocation.clearWatch(watchId);
-    };
-  }, [isFocused]);
+    pollLocation();
+    const intervalId = setInterval(pollLocation, 3000);
 
-  useEffect(() => {
-    if (!isFocused || !partnerLocation || !destination) return;
+    return () => clearInterval(intervalId);
+  }, [partnerId, dispatch, isFocused]);
 
-    const fetchRoute = async () => {
+  // ✅ Fetch route sử dụng utils helper
+  const fetchRouteInBackground = useCallback(
+    async (fromLocation: Coordinate, toLocation: Coordinate) => {
+      if (isRouteFetchingRef.current) return;
+
+      isRouteFetchingRef.current = true;
+
       try {
-        setLoading(true);
-        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${partnerLocation[0]},${partnerLocation[1]};${destination[0]},${destination[1]}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`;
-        const response = await fetch(url);
-        const data = await response.json();
+        const routeData = await fetchRoute(fromLocation, toLocation);
 
-        if (data.routes?.length > 0) {
-          const route = data.routes[0];
-          setRouteCoordinates(route.geometry.coordinates);
-          if (cameraRef.current) {
-            const bounds = getBounds([partnerLocation, destination]);
-            cameraRef.current.fitBounds(
-              [bounds.minLng, bounds.minLat],
-              [bounds.maxLng, bounds.maxLat],
-              [100, 50, 350, 50],
-              1000,
-            );
-          }
+        if (routeData) {
+          setRouteCoordinates(routeData.coordinates);
+          lastRouteLocationRef.current = fromLocation;
         }
       } catch (error) {
         console.error('❌ Error fetching route:', error);
       } finally {
+        isRouteFetchingRef.current = false;
         setLoading(false);
       }
+    },
+    [],
+  );
+
+  // ✅ Update partner location với debounce 5m
+  useEffect(() => {
+    if (locationPartner?.latitude && locationPartner?.longitude) {
+      const newLocation: Coordinate = [
+        locationPartner.longitude,
+        locationPartner.latitude,
+      ];
+
+      setPartnerLocation((prev: any) => {
+        if (!prev) {
+          return newLocation;
+        }
+
+        const dist = getDistance(prev, newLocation);
+
+        // Chỉ update nếu di chuyển > 5m
+        if (dist > 5) {
+          return newLocation;
+        }
+
+        return prev;
+      });
+      moveToUserLocation();
+    }
+  }, [locationPartner?.latitude, locationPartner?.longitude]);
+
+  // ✅ Fetch route khi partner di chuyển > 30m
+  useEffect(() => {
+    if (!isFocused || !partnerLocation || !destination) return;
+
+    // Kiểm tra khoảng cách di chuyển
+    if (lastRouteLocationRef.current) {
+      const distanceMoved = getDistance(
+        lastRouteLocationRef.current,
+        partnerLocation,
+      );
+      if (distanceMoved < 30) {
+        return;
+      }
+    }
+
+    // Debounce 1s trước khi fetch
+    if (fetchTimerRef.current) {
+      clearTimeout(fetchTimerRef.current);
+    }
+
+    fetchTimerRef.current = setTimeout(() => {
+      fetchRouteInBackground(partnerLocation, destination);
+    }, 500);
+
+    return () => {
+      if (fetchTimerRef.current) {
+        clearTimeout(fetchTimerRef.current);
+      }
     };
+  }, [partnerLocation, destination, isFocused, fetchRouteInBackground]);
 
-    fetchRoute();
-  }, [partnerLocation, destination, isFocused]);
+  // ✅ Initial camera fit bounds (sử dụng utils helper)
+  useEffect(() => {
+    if (
+      !initialCameraSetRef.current &&
+      partnerLocation &&
+      destination &&
+      cameraRef.current
+    ) {
+      const bounds = getBounds([partnerLocation, destination]);
 
-  const getBounds = (coords: [number, number][]) => {
-    const lngs = coords.map(c => c[0]);
-    const lats = coords.map(c => c[1]);
-    return {
-      minLng: Math.min(...lngs),
-      maxLng: Math.max(...lngs),
-      minLat: Math.min(...lats),
-      maxLat: Math.max(...lats),
-    };
-  };
+      cameraRef.current.fitBounds(
+        [bounds.minLng, bounds.minLat],
+        [bounds.maxLng, bounds.maxLat],
+        [100, 50, 350, 50], // padding
+        1000, // duration
+      );
+      initialCameraSetRef.current = true;
+    }
+  }, [partnerLocation, destination]);
 
+  // ✅ Move to partner location
   const moveToUserLocation = useCallback(() => {
     if (partnerLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: partnerLocation,
-        zoomLevel: 16,
-        animationDuration: 1000,
+        zoomLevel: CAMERA_CONFIG.zoomLevel,
+        animationDuration: CAMERA_CONFIG.animationDuration,
       });
     }
-  }, [userLocation]);
+  }, [partnerLocation]);
 
-  const handleNavigationChat = (appointment: any) => {
-    const dataRoomChat = {
-      roomId: appointment?.roomId,
-      avatarUrl: appointment?.partnerId?.avatarUrl,
-      fullName: appointment?.partnerId?.fullName,
-      partnerId: appointment?.partnerId?._id,
-      orderId: appointment?.orderId?._id,
-    };
-    navigation.navigate(...(['ChatViewVer2', { dataRoomChat }] as never));
-  };
+  const handleNavigationChat = useCallback(
+    (appointment: any) => {
+      const dataRoomChat = {
+        roomId: appointment?.roomId,
+        avatarUrl: appointment?.partnerId?.avatarUrl,
+        fullName: appointment?.partnerId?.fullName,
+        partnerId: appointment?.partnerId?._id,
+        orderId: appointment?.orderId?._id,
+      };
+      navigation.navigate(...(['ChatViewVer2', { dataRoomChat }] as never));
+    },
+    [navigation],
+  );
+
+  const handleCall = useCallback(() => {
+    if (phoneNumber) {
+      Linking.openURL(`tel:${phoneNumber}`);
+    }
+  }, [phoneNumber]);
 
   return (
     <View style={styles.mapContainer}>
-      {isFocused && partnerLocation && destination ? (
-        <MapboxGL.MapView style={styles.map}>
-          <MapboxGL.Camera ref={cameraRef} />
-
-          {routeCoordinates && (
-            <MapboxGL.ShapeSource
-              id="routeSource"
-              shape={{
-                type: 'Feature',
-                properties: {},
-                geometry: {
-                  type: 'LineString',
-                  coordinates: routeCoordinates,
-                },
-              }}
-            >
-              <MapboxGL.LineLayer
-                id="routeLine"
-                style={{ lineColor: '#1E88E5', lineWidth: 6 }}
-              />
-            </MapboxGL.ShapeSource>
-          )}
-
-          {partnerLocation && (
-            <MapboxGL.PointAnnotation
-              id="partnerMarker"
-              coordinate={partnerLocation}
-            >
-              <View
-                style={[styles.marker, { backgroundColor: Colors.primary }]}
-              />
-            </MapboxGL.PointAnnotation>
-          )}
-
-          {destination && (
-            <MapboxGL.PointAnnotation
-              id="destinationMarker"
-              coordinate={destination}
-            >
-              <View style={[styles.marker, { backgroundColor: '#FF3B30' }]} />
-            </MapboxGL.PointAnnotation>
-          )}
-        </MapboxGL.MapView>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      {isFocused && destination ? (
+        partnerLocation ? (
+          <MapContent
+            partnerLocation={partnerLocation}
+            destination={destination}
+            routeCoordinates={routeCoordinates}
+            cameraRef={cameraRef}
+          />
+        ) : (
+          <View style={styles.loadingMap}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Đang tìm vị trí thợ...</Text>
+          </View>
+        )
       ) : (
         <View style={styles.loadingMap}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -247,7 +347,11 @@ const AppointmentInProgress1View = () => {
       <View style={styles.bottomContainer}>
         <View style={{ flexDirection: 'row' }}>
           <FastImage
-            source={img_default_avatar}
+            source={
+              appointment?.partnerId?.avatarUrl
+                ? { uri: appointment.partnerId.avatarUrl }
+                : img_default_avatar
+            }
             style={{ width: 62, height: 62, borderRadius: 31 }}
           />
           <Spacer width={12} />
@@ -256,13 +360,10 @@ const AppointmentInProgress1View = () => {
             <Text style={DefaultStyles.textBold16Black}>
               {appointment?.partnerId?.fullName || 'Thợ'}
             </Text>
+
             <Spacer height={10} />
             <View style={{ flexDirection: 'row', marginBottom: 12 }}>
-              <TouchableOpacity
-                onPress={() =>
-                  phoneNumber && Linking.openURL(`tel:${phoneNumber}`)
-                }
-              >
+              <TouchableOpacity onPress={handleCall}>
                 <FastImage source={ic_eye_off} style={styles.iconButton} />
               </TouchableOpacity>
               <Spacer width={10} />
@@ -275,6 +376,7 @@ const AppointmentInProgress1View = () => {
           </View>
         </View>
       </View>
+
       <TouchableOpacity onPress={moveToUserLocation} style={styles.meButton}>
         <Text style={styles.meButtonText}>📍</Text>
       </TouchableOpacity>
@@ -292,6 +394,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.whiteAE,
+  },
+  loadingText: {
+    marginTop: 10,
+    ...DefaultStyles.textRegular14Gray,
   },
   marker: {
     height: 18,

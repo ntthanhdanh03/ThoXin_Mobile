@@ -103,12 +103,14 @@ const HomeView = () => {
       {showCard && appointmentInProgress && (
         <View style={styles.bottomCard}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle}>Cuộc hẹn đang xử lý</Text>
-            <Text style={styles.cardText}>
+            <Text style={DefaultStyles.textBold16Black}>
+              Cuộc hẹn đang xử lý
+            </Text>
+            <Text style={DefaultStyles.textRegular13Black}>
               Dịch vụ:{' '}
               {appointmentInProgress?.orderId?.service || 'Không xác định'}
             </Text>
-            <Text style={styles.cardText}>
+            <Text style={{ ...DefaultStyles.textBold12Black }}>
               Trạng thái: {getStatusText(appointmentInProgress?.status)}
             </Text>
           </View>
@@ -116,7 +118,7 @@ const HomeView = () => {
             style={styles.cardButton}
             onPress={() => handleContinue()}
           >
-            <Text style={styles.cardButtonText}>Tiếp tục</Text>
+            <Text style={{ ...DefaultStyles.textMedium12White }}>Tiếp tục</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -198,26 +200,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  cardTitle: {
-    fontWeight: '700',
-    fontSize: 15,
-    color: Colors.primary,
-  },
-  cardText: {
-    fontSize: 13,
-    color: '#333',
-    marginTop: 2,
-  },
+
   cardButton: {
     backgroundColor: Colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 10,
     marginLeft: 10,
-  },
-  cardButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
   },
 });

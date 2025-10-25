@@ -15,6 +15,7 @@ import AppointmentInProgress4View from '../views/appointment/AppointmentInProgre
 import AppointmentInProgress5View from '../views/appointment/AppointmentInProgress5View';
 import AppointmentInProgressView from '../views/appointment/AppointmentInProgressView';
 import PromotionView from '../views/profile/PromotionView';
+import ProfileEditView from '../views/profile/ProfileEditView';
 
 export type RootStackParamList = {
   BottomTab: undefined;
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   AppointmentView: {};
   AppointmentInProgressView: undefined;
   PromotionView: undefined;
+  ProfileEditView: undefined;
 };
 
 const InStack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +65,8 @@ const InsideStack = () => {
         name="DetailActivityView"
         component={DetailActivityView}
       />
+      <InStack.Screen name="ProfileEditView" component={ProfileEditView} />
+
       <InStack.Screen name="ChatViewVer2" component={ChatViewVer2} />
       <InStack.Screen name="AppointmentView" component={AppointmentView} />
       <InStack.Screen

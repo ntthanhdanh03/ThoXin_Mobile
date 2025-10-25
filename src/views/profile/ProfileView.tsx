@@ -32,6 +32,7 @@ const ProfileView = () => {
   const navigation = useNavigation();
   const [showCameraOption, setShowCameraOption] = useState(false);
   const currentVersion = VersionCheck.getCurrentVersion();
+
   const handlePressLogout = async () => {
     if (authData?.user?.deviceToken?.token) {
       dispatch(
@@ -93,7 +94,7 @@ const ProfileView = () => {
               <TouchableOpacity
                 style={styles.row}
                 onPress={() => {
-                  navigation.navigate('PersonalInformationView' as never);
+                  navigation.navigate('ProfileEditView' as never);
                 }}
               >
                 <View

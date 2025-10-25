@@ -25,6 +25,26 @@ function* getAppointmentSaga({
   }
 }
 
+function* getAppointmentByOrderSaga({
+  payload,
+  callback,
+}: ReturnType<typeof actions.getAppointmentByOrderAction>) {
+  try {
+    const response: IResponse = yield call(() =>
+      api.get(`/appointments/order/${payload.orderId}`),
+    );
+    console.log('***getAppointmentByOrderSaga', response);
+    if (response && response?.status === 200 && response?.data) {
+      callback && callback(response?.data, null);
+    } else {
+      callback && callback(null, 'failure');
+    }
+  } catch (e: any) {
+    console.log('getAppointmentByOrderSaga', e, e?.response);
+    callback && callback(null, 'failure');
+  }
+}
+
 function* updateAppointmentSaga({
   payload,
   callback,
@@ -89,6 +109,7 @@ function* getPromotionSaga({
 export default function* appointmentSaga() {
   yield all([
     takeLatest(types.GET_APPOINTMENT, getAppointmentSaga),
+    takeLatest(types.GET_APPOINTMENT_BY_ORDER, getAppointmentByOrderSaga),
     takeLatest(types.UPDATE_APPOINTMENT, updateAppointmentSaga),
     takeLatest(types.RATE_APPOINTMENT, rateAppointmentSaga),
     takeLatest(types.GET_PROMOTION, getPromotionSaga),

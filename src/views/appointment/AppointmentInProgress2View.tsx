@@ -258,7 +258,6 @@ const AppointmentInProgress2View = () => {
           )}
         </ScrollView>
       </CustomModal>
-      a
     </SafeAreaView>
   );
 };
