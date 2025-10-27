@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { AppState, DeviceEventEmitter, StyleSheet } from 'react-native';
+import { DeviceEventEmitter } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import messaging from '@react-native-firebase/messaging';
 import {
   getMessaging,
   FirebaseMessagingTypes,
@@ -23,7 +22,10 @@ import {
   getChatRoomByOrderAction,
   getMessageAction,
 } from '../store/actions/chatAction';
-import { getOrderAction } from '../store/actions/orderAction';
+import {
+  getOrderAction,
+  updateOrderAction,
+} from '../store/actions/orderAction';
 import { getAppointmentAction } from '../store/actions/appointmentAction';
 import { getLocationPartnerAction } from '../store/actions/locationAction';
 
@@ -35,6 +37,7 @@ import SocketUtil from '../utils/socketUtil';
 import '../utils/appStateUtil';
 import RatingModal from './RatingModal';
 import CallModal, { CallModalComponent } from './CallModal';
+import WebRTCClient from '../utils/webrtcClient';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +46,9 @@ interface NotificationState {
   message?: string;
   visible: boolean;
 }
+
+// 🆕 Lưu trữ tạm thông tin cuộc gọi đến
+let pendingCallData: any = null;
 
 const RootNavigator = () => {
   const dispatch = useDispatch();
@@ -110,7 +116,6 @@ const RootNavigator = () => {
           dispatch(getAppointmentAction({ clientId: data.clientId }));
         },
       },
-
       {
         name: 'chat.newMessage',
         handler: (event: any) => {
@@ -123,7 +128,6 @@ const RootNavigator = () => {
           dispatch(getLocationPartnerAction({ partnerId: event.partnerId }));
         },
       },
-
       {
         name: 'appointment.updateComplete',
         handler: (event: any) => {
@@ -143,38 +147,111 @@ const RootNavigator = () => {
       },
 
       {
-        name: 'call.incoming',
+        name: 'appointment.updateToCancel',
+        handler: (event: any) => {
+          console.log('appointment.updateToCancel root', event.data.orderId);
+          dispatch(
+            getAppointmentAction(
+              { clientId: event.data?.clientId },
+              (data: any) => {
+                if (data) {
+                  dispatch(
+                    updateOrderAction(
+                      {
+                        id: event.data.orderId,
+                        updateData: {
+                          status: 'cancelled',
+                        },
+                      },
+                      (data: any, error: any) => {
+                        if (data) {
+                          dispatch(
+                            getOrderAction({ clientId: authData?.user?._id }),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+          );
+        },
+      },
+      {
+        name: 'webrtc.offer',
         handler: (data: any) => {
-          console.log('call.incoming', data);
+          console.log('webrtc.offer', data);
+          pendingCallData = {
+            from_userId: data.from_userId,
+            to_userId: data.to_userId,
+            sdp: data.sdp,
+            form_name: data?.form_name,
+            form_avatar: data?.form_avatar,
+          };
           CallModal.show({
             type: 'incoming',
-            role_Receiver: 'client',
-
+            role_Receiver: 'partner',
             from_userId: data.from_userId,
             form_name: data?.form_name,
-            form_avatar: data?.form_name,
+            form_avatar: data?.form_avatar,
             to_userId: data.to_userId,
+            sdp: data.sdp,
           });
         },
       },
       {
+        name: 'webrtc.answer',
+        handler: (data: any) => {
+          console.log('📥 Received answer');
+          WebRTCClient.handleAnswer(data.sdp);
+        },
+      },
+
+      {
+        name: 'webrtc.ice-candidate',
+        handler: (data: any) => {
+          console.log('❄️ Received candidate:', data.to_role);
+
+          if (data.to_role === 'client') {
+            if (!WebRTCClient.pc) {
+              const fromUserId =
+                data.from_userId || pendingCallData?.from_userId;
+              if (fromUserId) {
+                (
+                  WebRTCClient.constructor as any
+                ).queueCandidateBeforeConnection(fromUserId, data.candidate);
+              } else {
+                console.warn('⚠️ Cannot queue candidate: no from_userId');
+              }
+            } else {
+              // Đã có PC, xử lý bình thường
+              WebRTCClient.handleCandidate(data);
+            }
+          }
+        },
+      },
+
+      {
         name: 'call.request_cancel',
         handler: (data: any) => {
-          console.log('call.request_cancel', data);
+          console.log('📞 call.request_cancel', data);
+          pendingCallData = null;
           CallModal.hide();
         },
       },
       {
         name: 'call.declined',
         handler: (data: any) => {
-          console.log('call.declined', data);
+          pendingCallData = null;
           CallModal.hide();
         },
       },
       {
         name: 'call.ended',
         handler: (data: any) => {
-          console.log('call.ended', data);
+          console.log('📴 call.ended', data);
+          pendingCallData = null;
           CallModal.hide();
         },
       },
@@ -184,7 +261,10 @@ const RootNavigator = () => {
       DeviceEventEmitter.addListener(name, handler),
     );
 
-    return () => subscriptions.forEach(sub => sub.remove());
+    return () => {
+      subscriptions.forEach(sub => sub.remove());
+      pendingCallData = null;
+    };
   }, [dispatch]);
 
   useEffect(() => {

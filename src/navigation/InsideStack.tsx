@@ -16,6 +16,7 @@ import AppointmentInProgress5View from '../views/appointment/AppointmentInProgre
 import AppointmentInProgressView from '../views/appointment/AppointmentInProgressView';
 import PromotionView from '../views/profile/PromotionView';
 import ProfileEditView from '../views/profile/ProfileEditView';
+import DetailApplicantView from '../views/activity/DetailApplicantView';
 
 export type RootStackParamList = {
   BottomTab: undefined;
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   AppointmentInProgressView: undefined;
   PromotionView: undefined;
   ProfileEditView: undefined;
+  DetailApplicantView: { applicantData: any };
 };
 
 const InStack = createNativeStackNavigator<RootStackParamList>();
@@ -74,6 +76,10 @@ const InsideStack = () => {
         component={AppointmentInProgressView}
       />
       <InStack.Screen name="PromotionView" component={PromotionView} />
+      <InStack.Screen
+        name="DetailApplicantView"
+        component={DetailApplicantView}
+      />
     </InStack.Navigator>
   );
 };

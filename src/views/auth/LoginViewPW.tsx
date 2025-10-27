@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import Spacer from '../components/Spacer';
 import Button from '../components/Button';
@@ -18,11 +18,19 @@ const LoginViewPW = ({ route }: any) => {
   const dispatch = useDispatch();
   const [password, setPassword] = useState('');
   const { phoneNumber } = route.params;
+
+  // Kiểm tra password đủ 6 số
+  const isPasswordValid = useMemo(() => {
+    return password.length === 6;
+  }, [password]);
+
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPasswordView' as never);
   };
 
   const handleLogin = () => {
+    if (!isPasswordValid) return;
+
     const postData = {
       phoneNumber: phoneNumber,
       password: password,
@@ -31,6 +39,7 @@ const LoginViewPW = ({ route }: any) => {
     dispatch(
       loginAction(postData, (data: any, error: any) => {
         if (data && data.token) {
+          // Login success
         } else {
           GlobalModalController.showModal({
             title: 'Đăng nhập thất bại',
@@ -41,6 +50,7 @@ const LoginViewPW = ({ route }: any) => {
       }),
     );
   };
+
   return (
     <SafeAreaView style={DefaultStyles.container}>
       <Header isBack />
@@ -92,7 +102,12 @@ const LoginViewPW = ({ route }: any) => {
           quy chế của Thợ Xịn và Thợ Xịn sẽ được xử lí dữ liệu cá nhân của mình
         </Text>
         <Spacer height={16} />
-        <Button isColor title={'Tiếp tục'} onPress={handleLogin} />
+        <Button
+          isColor
+          title={'Tiếp tục'}
+          onPress={handleLogin}
+          disable={!isPasswordValid}
+        />
         <Spacer height={20} />
       </View>
     </SafeAreaView>

@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import Spacer from '../components/Spacer';
 import Button from '../components/Button';
@@ -19,21 +19,37 @@ const LoginView = () => {
   const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Regex cho số điện thoại Việt Nam (10-11 số, bắt đầu bằng 0)
+  const isValidPhoneNumber = useMemo(() => {
+    if (!phoneNumber) return false;
+
+    // Regex: bắt đầu bằng 0, theo sau là 9-10 chữ số
+    const phoneRegex = /^0[0-9]{9,10}$/;
+    return phoneRegex.test(phoneNumber.trim());
+  }, [phoneNumber]);
+
   const handleCheckPhoneNumber = () => {
+    if (!isValidPhoneNumber) return;
+
     setIsLoading(true);
     const postData = {
-      phoneNumber: phoneNumber,
+      phoneNumber: phoneNumber?.trim(),
       role: 'client',
     };
     dispatch(
       checkPhoneExistAction(postData, (data: any, error: any) => {
         if (data === true) {
           setIsLoading(false);
-          navigation.navigate(...(['LoginViewPW', { phoneNumber }] as never));
+          navigation.navigate(
+            ...(['LoginViewPW', { phoneNumber: phoneNumber?.trim() }] as never),
+          );
         } else {
           setIsLoading(false);
           navigation.navigate(
-            ...(['RegisterOTPView', { phoneNumber }] as never),
+            ...([
+              'RegisterOTPView',
+              { phoneNumber: phoneNumber?.trim() },
+            ] as never),
           );
         }
       }),
@@ -84,6 +100,12 @@ const LoginView = () => {
               />
             }
           />
+          {phoneNumber && phoneNumber.length > 0 && !isValidPhoneNumber && (
+            <>
+              <Spacer height={8} />
+              <Text style={styles.errorText}>Số điện thoại không hợp lệ.</Text>
+            </>
+          )}
         </View>
         <Spacer height={30} />
       </View>
@@ -95,7 +117,12 @@ const LoginView = () => {
         </Text>
         <Spacer height={16} />
 
-        <Button isColor title={'Tiếp tục'} onPress={handleCheckPhoneNumber} />
+        <Button
+          isColor
+          title={'Tiếp tục'}
+          onPress={handleCheckPhoneNumber}
+          disable={!isValidPhoneNumber}
+        />
         <Spacer height={20} />
       </View>
       <LoadingView loading={isLoading} />
@@ -105,4 +132,10 @@ const LoginView = () => {
 
 export default LoginView;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  errorText: {
+    fontSize: scaleModerate(12),
+    color: Colors.redFD,
+    marginLeft: scaleModerate(12),
+  },
+});

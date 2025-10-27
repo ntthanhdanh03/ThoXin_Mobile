@@ -18,6 +18,7 @@ import Spacer from '../components/Spacer';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/InsideStack';
+import Header from '../components/Header';
 const { width } = Dimensions.get('window');
 
 const ActivityView = () => {
@@ -145,15 +146,9 @@ const ActivityView = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={DefaultStyles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-
-      <View style={styles.header}>
-        <Text style={DefaultStyles.textBold16Black}>Hoạt động của tôi</Text>
-        <Text style={DefaultStyles.textRegular12Gray}>
-          {orderData?.length || 0} hoạt động
-        </Text>
-      </View>
+      <Header title="Hoạt động" />
 
       <View style={styles.container}>
         <FlatList

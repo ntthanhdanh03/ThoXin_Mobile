@@ -51,6 +51,11 @@ export default class SocketUtil {
       DeviceEventEmitter.emit('appointment.updateComplete', { appointment });
     });
 
+    this.socket.on('appointment.updateToCancel', (data: any) => {
+      console.log('appointment.updateToCancel');
+      DeviceEventEmitter.emit('appointment.updateToCancel', { data });
+    });
+
     this.socket.on('call.incoming', payload => {
       console.log('📞 Incoming call:', payload);
       DeviceEventEmitter.emit('call.incoming', payload);
@@ -74,6 +79,19 @@ export default class SocketUtil {
     this.socket.on('call.ended', payload => {
       console.log('🔚 Call ended:', payload);
       DeviceEventEmitter.emit('call.ended', payload);
+    });
+
+    this.socket.on('webrtc.offer', payload => {
+      console.log('<< offer', payload);
+      DeviceEventEmitter.emit('webrtc.offer', payload);
+    });
+    this.socket.on('webrtc.answer', payload => {
+      console.log('<< answer', payload);
+      DeviceEventEmitter.emit('webrtc.answer', payload);
+    });
+    this.socket.on('webrtc.ice-candidate', payload => {
+      console.log('<< candidate', payload);
+      DeviceEventEmitter.emit('webrtc.ice-candidate', payload);
     });
   }
 

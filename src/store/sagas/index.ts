@@ -4,6 +4,7 @@ import orderSaga from './orderSaga';
 import chatSaga from './chatSaga';
 import appointmentSaga from './appointmentSaga';
 import locationSaga from './locationSaga';
+import rateSaga from './rateSaga';
 
 function* rootSaga() {
   yield all([
@@ -12,6 +13,7 @@ function* rootSaga() {
     chatSaga(),
     appointmentSaga(),
     locationSaga(),
+    rateSaga(),
   ]);
 }
 

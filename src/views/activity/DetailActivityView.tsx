@@ -103,7 +103,15 @@ const DetailActivityView = ({ route }: any) => {
   };
 
   const renderApplicant = ({ item: applicant }: any) => (
-    <TouchableOpacity style={styles.applicantCard} onPress={() => {}}>
+    <TouchableOpacity
+      style={styles.applicantCard}
+      onPress={() => {
+        console.log();
+        navigation.navigate('DetailApplicantView', {
+          applicantData: applicant,
+        });
+      }}
+    >
       <View style={styles.applicantHeader}>
         <FastImage
           source={{ uri: applicant.avatarUrl }}

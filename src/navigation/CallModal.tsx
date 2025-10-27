@@ -13,10 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import { Colors } from '../styles/Colors';
 import SocketUtil from '../utils/socketUtil';
-import { DefaultStyles } from '../styles/DefaultStyles';
+import WebRTCClient from '../utils/webrtcClient';
 
 const { height } = Dimensions.get('window');
 
@@ -24,6 +23,7 @@ export interface CallModalProps {
   type: 'outgoing' | 'incoming';
   role_Call?: 'client' | 'partner';
   role_Receiver?: 'client' | 'partner';
+  sdp?: string;
 
   from_userId?: string;
   form_name?: string;
@@ -44,9 +44,13 @@ let modalRef: CallModalRef | null = null;
 const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
   const [visible, setVisible] = useState(false);
   const [data, setData] = useState<CallModalProps | null>(null);
-  const [callPhase, setCallPhase] = useState<'ringing' | 'inCall'>('ringing');
-
   const translateY = useRef(new Animated.Value(height)).current;
+  const [callPhase, setCallPhase] = useState<'ringing' | 'inCall'>('ringing');
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useImperativeHandle(ref, () => ({
     show: (props: CallModalProps) => {
@@ -67,22 +71,75 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
         setVisible(false);
         setData(null);
         setCallPhase('ringing');
+        setIsSpeakerOn(false);
+        setIsMuted(false);
+        setCallDuration(0);
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current);
+          callTimerRef.current = null;
+        }
       });
     },
   }));
-
   useEffect(() => {
     SocketUtil.on('call.accepted', payload => {
-      console.log('📞 Cuộc gọi được chấp nhận:', payload);
+      console.log('✅ Call accepted:', payload);
       setCallPhase('inCall');
+    });
+
+    SocketUtil.on('call.ended', () => {
+      console.log('📴 Cuộc gọi kết thúc');
+      WebRTCClient.endCall();
+      modalRef?.hide();
+      setCallPhase('ringing');
     });
 
     return () => {
       SocketUtil.off('call.accepted');
+      SocketUtil.off('call.ended');
     };
   }, []);
 
   useEffect(() => {
+    if (callPhase === 'ringing') {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [callPhase]);
+
+  useEffect(() => {
+    if (callPhase === 'inCall') {
+      callTimerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current);
+        callTimerRef.current = null;
+      }
+    };
+  }, [callPhase]);
+
+  useEffect(() => {
+    if (!data?.to_userId || !data?.from_userId) return;
+
+    // CHỈ xử lý outgoing call
     if (data?.type === 'outgoing' && data?.to_userId) {
       SocketUtil.emit('call.request', {
         from_userId: data.from_userId,
@@ -91,44 +148,92 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
         form_name: data.form_name,
         form_avatar: data.form_avatar,
       });
-      console.log('📤 Gửi tín hiệu gọi đi tới', data.to_userId);
+
+      WebRTCClient.startCall(data.to_userId, data.from_userId);
     }
   }, [data]);
 
   if (!visible || !data) return null;
 
-  const { type, to_name, to_avatar, form_name } = data;
+  const { type, to_name, form_name } = data;
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const callRequestCancel = () => {
     SocketUtil.emit('call.request_cancel', {
       to: data.to_userId,
       role: 'client',
     });
-
+    WebRTCClient.endCall();
     modalRef?.hide();
   };
 
-  const handleAcceptCall = () => {
+  // 🆕 Handle Accept Call - Giống như bên thợ
+  const handleAcceptCall = async () => {
+    if (!data?.from_userId || !data?.to_userId || !data?.sdp) {
+      console.warn('⚠️ Thiếu thông tin cuộc gọi:', data);
+      return;
+    }
+
+    const fromUserId = data.from_userId;
+    const toUserId = data.to_userId;
+    const sdp = data.sdp;
+
+    console.log('✅ Accepting call from:', fromUserId);
+
+    // Emit accept event
     SocketUtil.emit('call.accept', {
-      from_userId: data.to_userId,
-      to_userId: data.from_userId,
+      from_userId: toUserId,
+      to_userId: fromUserId,
       to_role: 'partner',
     });
+
     setCallPhase('inCall');
+
+    try {
+      await WebRTCClient.handleOffer(fromUserId, sdp, toUserId);
+      console.log('✅ Call setup completed');
+    } catch (error) {
+      console.error('❌ Error handling offer:', error);
+    }
   };
 
   const handleDeclineCall = () => {
-    if (data.role_Receiver === 'client') {
-      SocketUtil.emit('call.decline', {
-        to: data.from_userId,
-        role: 'client',
+    SocketUtil.emit('call.decline', {
+      to: data.from_userId,
+      role: 'partner',
+    });
+    modalRef?.hide();
+  };
+
+  const toggleSpeaker = () => {
+    setIsSpeakerOn(!isSpeakerOn);
+    // TODO: Implement InCallManager
+  };
+
+  const toggleMute = () => {
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+
+    if (WebRTCClient.localStream) {
+      WebRTCClient.localStream.getAudioTracks().forEach((track: any) => {
+        track.enabled = !newMutedState;
       });
-    } else {
-      SocketUtil.emit('call.decline', {
-        to: data.from_userId,
-        role: 'partner',
-      });
+      console.log(newMutedState ? '🔇 Muted' : '🔊 Unmuted');
     }
+  };
+
+  const handleEndCall = () => {
+    WebRTCClient.endCall();
+    SocketUtil.emit('call.end', {
+      to_userId: data?.to_userId,
+      from_userId: data?.from_userId,
+    });
+    setCallPhase('ringing');
     modalRef?.hide();
   };
 
@@ -137,63 +242,120 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
       <View style={styles.container}>
         {callPhase === 'ringing' ? (
           <>
-            {type === 'incoming' ? (
-              <View>
-                <Text style={styles.btnText}>{form_name}</Text>
+            <Animated.View
+              style={[
+                styles.avatarContainer,
+                { transform: [{ scale: pulseAnim }] },
+              ]}
+            >
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {type === 'incoming'
+                    ? form_name?.charAt(0).toUpperCase()
+                    : to_name?.charAt(0).toUpperCase() || 'T'}
+                </Text>
               </View>
-            ) : (
-              <View>
-                <Text style={styles.btnText}>{to_name}</Text>
-              </View>
-            )}
-            {type === 'incoming' ? (
-              <View>
-                <TouchableOpacity
-                  style={[styles.button, styles.accept]}
-                  onPress={() => {
-                    handleDeclineCall();
-                  }}
-                >
-                  <Text style={styles.btnText}>Hủy</Text>
-                </TouchableOpacity>
+            </Animated.View>
 
+            <View style={styles.callerInfo}>
+              <Text style={styles.name}>
+                {type === 'incoming' ? form_name : to_name || 'Thợ'}
+              </Text>
+              <Text style={styles.sub}>
+                {type === 'incoming' ? 'Cuộc gọi đến...' : 'Đang gọi...'}
+              </Text>
+            </View>
+
+            <View style={styles.buttons}>
+              <TouchableOpacity
+                style={[styles.button, styles.decline]}
+                onPress={
+                  type === 'incoming' ? handleDeclineCall : callRequestCancel
+                }
+              >
+                <Text style={styles.btnIcon}>✕</Text>
+                <Text style={styles.btnLabel}>
+                  {type === 'incoming' ? 'Từ chối' : 'Hủy'}
+                </Text>
+              </TouchableOpacity>
+
+              {type === 'incoming' && (
                 <TouchableOpacity
                   style={[styles.button, styles.accept]}
-                  onPress={() => {
-                    handleAcceptCall();
-                  }}
+                  onPress={handleAcceptCall}
                 >
-                  <Text style={styles.btnText}>Trả lời</Text>
+                  <Text style={styles.btnIcon}>✓</Text>
+                  <Text style={styles.btnLabel}>Trả lời</Text>
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.buttons}>
-                <TouchableOpacity
-                  style={[styles.button, styles.decline]}
-                  onPress={() => callRequestCancel()}
-                >
-                  <Text style={styles.btnText}>Hủy</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
           </>
         ) : (
           <>
-            <View>
-              <Text>Trong cuộc gọi</Text>
+            <View style={styles.inCallContainer}>
+              <View style={styles.avatarContainerSmall}>
+                <Text style={styles.avatarTextSmall}>
+                  {type === 'incoming'
+                    ? form_name?.charAt(0).toUpperCase()
+                    : to_name?.charAt(0).toUpperCase() || 'T'}
+                </Text>
+              </View>
+
+              <Text style={styles.nameInCall}>
+                {type === 'incoming' ? form_name : to_name || 'Thợ'}
+              </Text>
+              <Text style={styles.durationText}>
+                {formatDuration(callDuration)}
+              </Text>
+
+              <View style={styles.controlButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.controlButton,
+                    isMuted && styles.controlButtonActive,
+                  ]}
+                  onPress={toggleMute}
+                >
+                  <Text style={styles.controlIcon}>
+                    {isMuted ? '🔇' : '🎤'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.controlLabel,
+                      isMuted && styles.controlLabelActive,
+                    ]}
+                  >
+                    {isMuted ? 'Đã tắt' : 'Mic'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.controlButton,
+                    isSpeakerOn && styles.controlButtonActive,
+                  ]}
+                  onPress={toggleSpeaker}
+                >
+                  <Text style={styles.controlIcon}>
+                    {isSpeakerOn ? '🔊' : '🔉'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.controlLabel,
+                      isSpeakerOn && styles.controlLabelActive,
+                    ]}
+                  >
+                    {isSpeakerOn ? 'Loa ngoài' : 'Loa'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
-                style={[styles.button, styles.decline]}
-                onPress={() => {
-                  SocketUtil.emit('call.end', {
-                    to_userId: data?.to_userId,
-                    from_userId: data?.from_userId,
-                  });
-                  setCallPhase('ringing');
-                  modalRef?.hide();
-                }}
+                style={[styles.button, styles.endCallButton]}
+                onPress={handleEndCall}
               >
-                <Text style={styles.btnText}>Tắt cuộc gọi</Text>
+                <Text style={styles.btnIcon}>✕</Text>
+                <Text style={styles.btnLabel}>Kết thúc</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -230,37 +392,91 @@ const styles = StyleSheet.create({
     height,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.whiteFF,
     paddingHorizontal: 20,
+    paddingBottom: 60,
   },
-  avatar: {
+  avatarContainer: {
+    marginBottom: 40,
+  },
+  avatarPlaceholder: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    marginBottom: 20,
-    backgroundColor: '#eee',
+    backgroundColor: 'rgba(76, 217, 100, 0.2)',
+    borderWidth: 3,
+    borderColor: '#4CD964',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#4CD964',
+  },
+  avatarContainerSmall: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(76, 217, 100, 0.2)',
+    borderWidth: 2,
+    borderColor: '#4CD964',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarTextSmall: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#4CD964',
+  },
+  callerInfo: {
+    alignItems: 'center',
+    marginBottom: 80,
+  },
+  inCallContainer: {
+    alignItems: 'center',
+    width: '100%',
   },
   name: {
-    fontSize: 26,
-    color: '#000',
+    fontSize: 32,
+    color: '#ffffff',
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  nameInCall: {
+    fontSize: 28,
+    color: '#ffffff',
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   sub: {
+    fontSize: 18,
+    color: '#a0a0a0',
+  },
+  durationText: {
     fontSize: 16,
-    color: '#777',
-    marginBottom: 40,
+    color: '#4CD964',
+    fontWeight: '600',
+    marginBottom: 50,
   },
   buttons: {
     flexDirection: 'row',
-    gap: 30,
+    gap: 50,
+    alignItems: 'center',
   },
   button: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 75,
+    height: 75,
+    borderRadius: 37.5,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   decline: {
     backgroundColor: '#FF3B30',
@@ -268,7 +484,51 @@ const styles = StyleSheet.create({
   accept: {
     backgroundColor: '#4CD964',
   },
-  btnText: {
-    ...DefaultStyles.textBold16Black,
+  endCallButton: {
+    backgroundColor: '#FF3B30',
+    marginTop: 60,
+  },
+  btnIcon: {
+    fontSize: 32,
+    color: '#fff',
+    fontWeight: '700',
+  },
+  btnLabel: {
+    fontSize: 13,
+    color: '#fff',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 30,
+  },
+  controlButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  controlButtonActive: {
+    backgroundColor: '#4CD964',
+    borderColor: '#4CD964',
+  },
+  controlIcon: {
+    fontSize: 28,
+  },
+  controlLabel: {
+    fontSize: 10,
+    color: '#a0a0a0',
+    marginTop: 4,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  controlLabelActive: {
+    color: '#fff',
   },
 });
