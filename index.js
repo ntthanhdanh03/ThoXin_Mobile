@@ -9,7 +9,7 @@ import { name as appName } from './app.json';
 import firebase from '@react-native-firebase/app';
 
 if (!firebase.apps.length) {
-    firebase.initializeApp(); // dùng config mặc định từ google-services.json
+  firebase.initializeApp();
 }
 
 AppRegistry.registerComponent(appName, () => App);

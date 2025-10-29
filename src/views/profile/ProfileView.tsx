@@ -24,6 +24,7 @@ import {
   deleteInstallationAction,
   logoutAction,
 } from '../../store/actions/authAction';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileView = () => {
   const dispatch = useDispatch();
@@ -34,6 +35,7 @@ const ProfileView = () => {
   const currentVersion = VersionCheck.getCurrentVersion();
 
   const handlePressLogout = async () => {
+    await AsyncStorage.removeItem('authToken');
     if (authData?.user?.deviceToken?.token) {
       dispatch(
         deleteInstallationAction({
@@ -42,6 +44,7 @@ const ProfileView = () => {
         }),
       );
     }
+
     dispatch(logoutAction());
   };
 

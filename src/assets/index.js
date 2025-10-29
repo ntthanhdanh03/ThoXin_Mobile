@@ -11,7 +11,6 @@ export const ic_phone = require('./icons/ic_phone.png');
 export const ic_seemore = require('./icons/ic_seemore.png');
 export const ic_balence = require('./icons/ic_balence.png');
 export const ic_calendar = require('./icons/ic_calendar.png');
-export const ic_imageComment = require('./icons/ic_imageComment.png');
 export const ic_chevron_left = require('./icons/ic_chevron_left.png');
 export const ic_close = require('./icons/ic_close.png');
 export const ic_chevron_down = require('./icons/ic_chevron_down.png');
@@ -22,6 +21,11 @@ export const ic_success = require('./icons/ic_success.png');
 export const ic_warning = require('./icons/ic_warning.png');
 export const ic_star = require('./icons/ic_star.png');
 export const ic_star_yellow = require('./icons/ic_star_yellow.png');
+
+export const ic_locksmith = require('./icons/ic_locksmith.jpg');
+export const ic_air_conditioning = require('./icons/ic_air_conditioning.jpg');
+export const ic_water = require('./icons/ic_water.jpg');
+export const ic_electricity = require('./icons/ic_electricity.jpg');
 
 export const lottie_delivery = require('./lotties/delivery.json');
 export const lottie_location = require('./lotties/location.json');

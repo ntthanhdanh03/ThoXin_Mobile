@@ -7,10 +7,13 @@ import ForgotPasswordView from '../views/auth/ForgotPasswordView';
 import ResetPasswordView from '../views/auth/ResetPasswordView';
 import RegisterOTPView from '../views/auth/RegisterOTPView';
 import NewPasswordView from '../views/auth/NewPasswordView';
+import RNBootSplash from 'react-native-bootsplash';
 
 const OutStack = createNativeStackNavigator();
 const OutsideStack = () => {
-  useEffect(() => {}, []);
+  useEffect(() => {
+    //RNBootSplash.hide({ fade: true });
+  }, []);
   return (
     <OutStack.Navigator
       screenOptions={{

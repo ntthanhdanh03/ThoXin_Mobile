@@ -38,6 +38,7 @@ import '../utils/appStateUtil';
 import RatingModal from './RatingModal';
 import CallModal, { CallModalComponent } from './CallModal';
 import WebRTCClient from '../utils/webrtcClient';
+import RNBootSplash from 'react-native-bootsplash';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,7 +48,6 @@ interface NotificationState {
   visible: boolean;
 }
 
-// 🆕 Lưu trữ tạm thông tin cuộc gọi đến
 let pendingCallData: any = null;
 
 const RootNavigator = () => {
@@ -62,6 +62,10 @@ const RootNavigator = () => {
   const [ratingData, setRatingData] = useState<any>();
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      RNBootSplash.hide({ fade: true });
+    }, 3500);
+
     const checkAuth = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
@@ -73,6 +77,7 @@ const RootNavigator = () => {
                 if (!data) {
                   AsyncStorage.removeItem('authToken');
                 }
+
                 setIsAuthChecked(true);
               },
             ),
@@ -81,12 +86,11 @@ const RootNavigator = () => {
           setIsAuthChecked(true);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
         setIsAuthChecked(true);
       }
     };
-
     checkAuth();
+    return () => clearTimeout(timer);
   }, [dispatch]);
 
   const handleOrder = (clientId: string) => {

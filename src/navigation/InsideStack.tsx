@@ -8,15 +8,11 @@ import ChoseLocationView from '../views/home/ChoseLocationView';
 import DetailActivityView from '../views/activity/DetailActivityView';
 import ChatViewVer2 from '../views/chat/ChatViewVer2';
 import AppointmentView from '../views/activity/AppointmentView';
-import AppointmentInProgress1View from '../views/appointment/AppointmentInProgress1View';
-import AppointmentInProgress2View from '../views/appointment/AppointmentInProgress2View';
-import AppointmentInProgress3View from '../views/appointment/AppointmentInProgress3View';
-import AppointmentInProgress4View from '../views/appointment/AppointmentInProgress4View';
-import AppointmentInProgress5View from '../views/appointment/AppointmentInProgress5View';
 import AppointmentInProgressView from '../views/appointment/AppointmentInProgressView';
 import PromotionView from '../views/profile/PromotionView';
 import ProfileEditView from '../views/profile/ProfileEditView';
 import DetailApplicantView from '../views/activity/DetailApplicantView';
+import RNBootSplash from 'react-native-bootsplash';
 
 export type RootStackParamList = {
   BottomTab: undefined;
