@@ -17,6 +17,7 @@
 		4AC315AB024D4E049358403A /* Google Sans Medium Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0326C33FC365421CA3B23420 /* Google Sans Medium Italic.ttf */; };
 		16EB5A399F994989B928B6DA /* Google Sans Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 85489ACB23294735BEF8560E /* Google Sans Medium.ttf */; };
 		336644E1B6394246A3C124DB /* Google Sans Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 191FD0F07E7C413A9D1AD161 /* Google Sans Regular.ttf */; };
+		B2D4AD13D29D4801B8476489 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0E0CD8CD05E242DAA96B2EA2 /* BootSplash.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		0326C33FC365421CA3B23420 /* Google Sans Medium Italic.ttf */ = {isa = PBXFileReference; name = "Google Sans Medium Italic.ttf"; path = "../assets/fonts/Google Sans Medium Italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		85489ACB23294735BEF8560E /* Google Sans Medium.ttf */ = {isa = PBXFileReference; name = "Google Sans Medium.ttf"; path = "../assets/fonts/Google Sans Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		191FD0F07E7C413A9D1AD161 /* Google Sans Regular.ttf */ = {isa = PBXFileReference; name = "Google Sans Regular.ttf"; path = "../assets/fonts/Google Sans Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0E0CD8CD05E242DAA96B2EA2 /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "ThoXin_Mobile/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +79,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				0E0CD8CD05E242DAA96B2EA2 /* BootSplash.storyboard */,
 			);
 			name = ThoXin_Mobile;
 			sourceTree = "<group>";
@@ -218,6 +221,7 @@
 				4AC315AB024D4E049358403A /* Google Sans Medium Italic.ttf in Resources */,
 				16EB5A399F994989B928B6DA /* Google Sans Medium.ttf in Resources */,
 				336644E1B6394246A3C124DB /* Google Sans Regular.ttf in Resources */,
+				B2D4AD13D29D4801B8476489 /* BootSplash.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
