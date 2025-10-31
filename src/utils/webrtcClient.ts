@@ -105,19 +105,23 @@ class WebRTCClient {
     return this.pc;
   }
 
-  async startCall(remoteUserId: string, from_userId: string) {
+  async startCall(
+    remoteUserId: string,
+    from_userId: string,
+    form_name: string,
+    form_avatar: string,
+  ) {
     await this.createPeerConnection(remoteUserId, true);
     const offer = await this.pc!.createOffer();
     await this.pc!.setLocalDescription(offer);
-
     SocketUtil.emit('webrtc.offer', {
       from_userId,
       to_userId: remoteUserId,
       to_role: 'partner',
       sdp: offer,
+      form_name,
+      form_avatar,
     });
-
-    console.log('📡 Offer sent to', remoteUserId);
   }
 
   async handleOffer(from_userId: string, sdp: any, to_userId: string) {

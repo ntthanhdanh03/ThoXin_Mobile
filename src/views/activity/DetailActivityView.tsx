@@ -13,7 +13,7 @@ import Header from '../components/Header';
 import Spacer from '../components/Spacer';
 import FastImage from 'react-native-fast-image';
 import { Colors } from '../../styles/Colors';
-import { ic_balence, ic_check_select, ic_eye_off } from '../../assets';
+import { ic_chat, ic_check_select, ic_close } from '../../assets';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -144,13 +144,12 @@ const DetailActivityView = ({ route }: any) => {
           }}
         >
           <FastImage
-            source={ic_eye_off}
+            source={ic_chat}
             style={{
               width: 32,
               height: 32,
               borderRadius: 25,
               marginRight: 12,
-              borderWidth: 1,
             }}
           />
         </TouchableOpacity>
@@ -167,7 +166,6 @@ const DetailActivityView = ({ route }: any) => {
               height: 32,
               borderRadius: 25,
               marginRight: 12,
-              borderWidth: 1,
             }}
           />
         </TouchableOpacity>
@@ -196,7 +194,7 @@ const DetailActivityView = ({ route }: any) => {
             {currentOrder.describe}
           </Text>
           <Spacer height={3} />
-          <Text style={DefaultStyles.textRegular14Black}>
+          <Text style={[DefaultStyles.textRegular14Black]}>
             Giá tham khảo: {currentOrder.rangePrice}
           </Text>
           <Spacer height={3} />
@@ -235,7 +233,7 @@ export default DetailActivityView;
 
 const styles = StyleSheet.create({
   serviceInfo: {
-    padding: 16,
+    padding: 8,
     borderRadius: 8,
     marginBottom: 20,
   },
@@ -253,12 +251,13 @@ const styles = StyleSheet.create({
   applicantCard: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
+    padding: 10,
+    marginHorizontal: 10,
+    marginVertical: 10,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 4,
     shadowRadius: 4,
   },
   applicantHeader: {

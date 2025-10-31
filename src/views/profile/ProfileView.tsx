@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 import Spacer from '../components/Spacer';
 import { DefaultStyles } from '../../styles/DefaultStyles';
-import { ic_balence, img_default_avatar } from '../../assets';
+import { ic_arrow_right, ic_balence, img_default_avatar } from '../../assets';
 import FastImage from 'react-native-fast-image';
 import { scaleModerate } from '../../styles/scaleDimensions';
 import { Colors } from '../../styles/Colors';
@@ -59,15 +59,13 @@ const ProfileView = () => {
               borderColor: Colors.border01,
               borderRadius: 25,
             }}
-          >
-            <LanguageView />
-          </View>
+          ></View>
         )}
       />
 
       <ScrollView style={[DefaultStyles.wrapBody, { flex: 1 }]}>
         <View style={{ alignItems: 'center' }}>
-          <Spacer height={5} />
+          <Spacer height={20} />
           <FastImage
             source={
               authData?.user?.avatarUrl
@@ -81,11 +79,11 @@ const ProfileView = () => {
             }}
           />
           <Spacer height={5} />
-          <Text style={{ ...DefaultStyles.textRegular16Black }}>
+          <Text style={{ ...DefaultStyles.textBold16Black }}>
             {authData?.user?.fullName || 'Chưa cập nhật'}
           </Text>
           <Text
-            style={{ ...DefaultStyles.textRegular14Black, color: '#344054' }}
+            style={{ ...DefaultStyles.textRegular16Black, color: '#344054' }}
           >
             {authData?.user?.phoneNumber}
           </Text>
@@ -100,13 +98,11 @@ const ProfileView = () => {
                   navigation.navigate('ProfileEditView' as never);
                 }}
               >
-                <View
-                  style={[styles.iconRow, { backgroundColor: Colors.whiteE5 }]}
-                >
-                  <FastImage source={ic_balence} style={styles.icon} />
-                </View>
                 <Text style={styles.text}>{t('Thông tin cá nhân')}</Text>
-                <FastImage source={ic_balence} style={styles.rightIcon} />
+                <FastImage
+                  source={ic_arrow_right}
+                  style={{ height: 24, width: 24 }}
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.row}
@@ -114,47 +110,37 @@ const ProfileView = () => {
                   navigation.navigate('PromotionView' as never);
                 }}
               >
-                <View
-                  style={[styles.iconRow, { backgroundColor: Colors.whiteE5 }]}
-                >
-                  <FastImage source={ic_balence} style={styles.icon} />
-                </View>
                 <Text style={styles.text}>{t('Mã khuyến mãi')}</Text>
-                <FastImage source={ic_balence} style={styles.rightIcon} />
+                <FastImage
+                  source={ic_arrow_right}
+                  style={{ height: 24, width: 24 }}
+                />
               </TouchableOpacity>
 
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.row}
                 onPress={() => {
                   navigation.navigate('ChangePasswordView' as never);
                 }}
               >
-                <View
-                  style={[styles.iconRow, { backgroundColor: Colors.whiteE5 }]}
-                >
-                  <FastImage source={ic_balence} style={styles.icon} />
-                </View>
                 <Text style={styles.text}>{t('Đổi mật khẩu')}</Text>
-                <FastImage source={ic_balence} style={styles.rightIcon} />
-              </TouchableOpacity>
+                <FastImage
+                  source={ic_arrow_right}
+                  style={{ height: 24, width: 24 }}
+                />
+              </TouchableOpacity> */}
             </View>
           )}
 
           <TouchableOpacity style={styles.row} onPress={handlePressLogout}>
-            <View style={[styles.iconRow, { backgroundColor: Colors.whiteE5 }]}>
-              <FastImage
-                source={ic_balence}
-                style={{ height: scaleModerate(16), width: scaleModerate(16) }}
-              />
-            </View>
             <Text style={styles.text}>{t('Đăng xuất')}</Text>
-            <FastImage source={ic_balence} style={styles.rightIcon} />
           </TouchableOpacity>
         </View>
       </ScrollView>
       <Text
         style={[DefaultStyles.textRegular13Gray, { textAlign: 'center' }]}
       >{`v${currentVersion}`}</Text>
+      <Spacer height={10} />
     </SafeAreaView>
   );
 };
@@ -163,9 +149,18 @@ export default ProfileView;
 
 const styles = StyleSheet.create({
   row: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: scaleModerate(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    marginTop: 10,
   },
   iconRow: {
     height: scaleModerate(30),
@@ -185,7 +180,7 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     marginLeft: scaleModerate(10),
-    ...DefaultStyles.textRegular14Black,
+    ...DefaultStyles.textMedium14Black,
   },
   camera: {
     backgroundColor: Colors.blue11,

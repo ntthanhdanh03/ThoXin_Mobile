@@ -186,13 +186,6 @@ const RootNavigator = () => {
         name: 'webrtc.offer',
         handler: (data: any) => {
           console.log('webrtc.offer', data);
-          pendingCallData = {
-            from_userId: data.from_userId,
-            to_userId: data.to_userId,
-            sdp: data.sdp,
-            form_name: data?.form_name,
-            form_avatar: data?.form_avatar,
-          };
           CallModal.show({
             type: 'incoming',
             role_Receiver: 'partner',
@@ -229,7 +222,6 @@ const RootNavigator = () => {
                 console.warn('⚠️ Cannot queue candidate: no from_userId');
               }
             } else {
-              // Đã có PC, xử lý bình thường
               WebRTCClient.handleCandidate(data);
             }
           }

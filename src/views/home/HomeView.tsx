@@ -15,6 +15,8 @@ import { useNavigation } from '@react-navigation/native';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { Colors } from '../../styles/Colors';
 import {
+  banner_1,
+  banner_2,
   ic_air_conditioning,
   ic_electricity,
   ic_locksmith,
@@ -30,12 +32,7 @@ import { SwiperFlatList } from 'react-native-swiper-flatlist';
 const { width } = Dimensions.get('window');
 
 const HomeView = () => {
-  // 3 link ảnh từ mạng
-  const images = [
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80',
-    'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=800&q=80',
-    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80',
-  ];
+  const images = [banner_1, banner_2];
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -143,7 +140,7 @@ const HomeView = () => {
             {images.map((imageUrl, index) => (
               <View key={index} style={styles.cardContainer}>
                 <FastImage
-                  source={{ uri: imageUrl }}
+                  source={imageUrl}
                   style={styles.cardImage}
                   resizeMode={FastImage.resizeMode.cover}
                 />
@@ -155,33 +152,34 @@ const HomeView = () => {
         <Spacer height={120} />
       </ScrollView>
 
-      {/* //  {showCard && appointmentInProgress && ( */}
-      <View style={styles.bottomCard}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>Cuộc hẹn đang xử lý</Text>
-          <Spacer height={6} />
-          <Text style={styles.cardService}>
-            Dịch vụ:{' '}
-            <Text style={styles.cardServiceValue}>
-              {appointmentInProgress?.orderId?.service || 'Không xác định'}
+      {showCard && appointmentInProgress && (
+        <View style={styles.bottomCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>Cuộc hẹn đang xử lý</Text>
+            <Spacer height={6} />
+            <Text style={styles.cardService}>
+              Dịch vụ:{' '}
+              <Text style={styles.cardServiceValue}>
+                {appointmentInProgress?.orderId?.service || 'Không xác định'}
+              </Text>
             </Text>
-          </Text>
-          <Spacer height={4} />
-          <Text style={styles.cardStatus}>
-            Trạng thái:{' '}
-            <Text style={styles.cardStatusValue}>
-              {getStatusText(appointmentInProgress?.status) || 'Không xác định'}
+            <Spacer height={4} />
+            <Text style={styles.cardStatus}>
+              Trạng thái:{' '}
+              <Text style={styles.cardStatusValue}>
+                {getStatusText(appointmentInProgress?.status) ||
+                  'Không xác định'}
+              </Text>
             </Text>
-          </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.cardButton}
+            onPress={() => handleContinue()}
+          >
+            <Text style={styles.cardButtonText}>Tiếp tục</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.cardButton}
-          onPress={() => handleContinue()}
-        >
-          <Text style={styles.cardButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
-      {/* // )} */}
+      )}
     </SafeAreaView>
   );
 };
@@ -305,7 +303,8 @@ const styles = StyleSheet.create({
     right: 16,
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
+
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',

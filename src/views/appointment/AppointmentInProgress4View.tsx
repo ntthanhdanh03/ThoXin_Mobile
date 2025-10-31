@@ -109,10 +109,9 @@ const AppointmentInProgress4View = () => {
               ...DefaultStyles.textMedium14Black,
               color: Colors.red30,
               textAlign: 'center',
-              marginBottom: 10,
             }}
           >
-            Vui lòng nhập mô tả vấn đề và ít nhất 1 ảnh trước khi vuốt
+            Vui lòng nhập đợi thông tin từ Thợ
           </Text>
         )}
         <SwipeButton
@@ -120,7 +119,6 @@ const AppointmentInProgress4View = () => {
             borderRadius: 8,
             overflow: 'hidden',
             marginHorizontal: 16,
-            marginBottom: 10,
           }}
           disabled={!hasCompleteInfo}
           railBackgroundColor={Colors.whiteAE}
@@ -191,6 +189,5 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: 1,
     borderColor: Colors.border01,
-    paddingVertical: 10,
   },
 });

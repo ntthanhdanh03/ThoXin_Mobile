@@ -22,9 +22,9 @@ import { DefaultStyles } from '../../styles/DefaultStyles';
 import Spacer from '../components/Spacer';
 import FastImage from 'react-native-fast-image';
 import {
-  ic_check_select,
+  ic_chat,
   ic_chevron_left,
-  ic_eye_off,
+  ic_phone_native,
   img_default_avatar,
   lottie_delivery,
   lottie_location,
@@ -361,16 +361,16 @@ const AppointmentInProgress1View = () => {
               {appointment?.partnerId?.fullName || 'Thợ'}
             </Text>
 
-            <Spacer height={10} />
+            <Spacer height={8} />
             <View style={{ flexDirection: 'row', marginBottom: 12 }}>
               <TouchableOpacity onPress={handleCall}>
-                <FastImage source={ic_eye_off} style={styles.iconButton} />
+                <FastImage source={ic_phone_native} style={styles.iconButton} />
               </TouchableOpacity>
-              <Spacer width={10} />
+              <Spacer width={14} />
               <TouchableOpacity
                 onPress={() => handleNavigationChat(appointment)}
               >
-                <FastImage source={ic_check_select} style={styles.iconButton} />
+                <FastImage source={ic_chat} style={styles.iconButton} />
               </TouchableOpacity>
             </View>
           </View>
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.whiteAE,
     borderWidth: 2,
   },
-  iconButton: { height: 24, width: 24 },
+  iconButton: { height: 28, width: 28 },
   infoCard: {
     position: 'absolute',
     top: 50,

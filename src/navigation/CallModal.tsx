@@ -16,6 +16,8 @@ import {
 import { Colors } from '../styles/Colors';
 import SocketUtil from '../utils/socketUtil';
 import WebRTCClient from '../utils/webrtcClient';
+import { DefaultStyles } from '../styles/DefaultStyles';
+import FastImage from 'react-native-fast-image';
 
 const { height } = Dimensions.get('window');
 
@@ -137,9 +139,17 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
   }, [callPhase]);
 
   useEffect(() => {
-    if (!data?.to_userId || !data?.from_userId) return;
+    if (
+      !data?.to_userId ||
+      !data?.from_userId ||
+      !data?.form_name ||
+      !data?.form_avatar
+    ) {
+      console.log('⚠️ DATA THIẾU KHÔNG MỞ CUỘC GỌI', data);
+      return;
+    }
 
-    // CHỈ xử lý outgoing call
+    // Chỉ xử lý outgoing call
     if (data?.type === 'outgoing' && data?.to_userId) {
       SocketUtil.emit('call.request', {
         from_userId: data.from_userId,
@@ -149,7 +159,12 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
         form_avatar: data.form_avatar,
       });
 
-      WebRTCClient.startCall(data.to_userId, data.from_userId);
+      WebRTCClient.startCall(
+        data.to_userId,
+        data.from_userId,
+        data.form_name,
+        data.form_avatar,
+      );
     }
   }, [data]);
 
@@ -214,6 +229,11 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
     setIsSpeakerOn(!isSpeakerOn);
     // TODO: Implement InCallManager
   };
+  const getDisplayName = () => {
+    return data?.type === 'incoming'
+      ? data?.form_name
+      : data?.to_name || 'Khách hàng';
+  };
 
   const toggleMute = () => {
     const newMutedState = !isMuted;
@@ -248,19 +268,14 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
                 { transform: [{ scale: pulseAnim }] },
               ]}
             >
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>
-                  {type === 'incoming'
-                    ? form_name?.charAt(0).toUpperCase()
-                    : to_name?.charAt(0).toUpperCase() || 'T'}
-                </Text>
-              </View>
+              <FastImage
+                style={styles.avatarPlaceholder}
+                source={{ uri: data.form_avatar }}
+              ></FastImage>
             </Animated.View>
 
             <View style={styles.callerInfo}>
-              <Text style={styles.name}>
-                {type === 'incoming' ? form_name : to_name || 'Thợ'}
-              </Text>
+              <Text style={styles.name}>{getDisplayName()}</Text>
               <Text style={styles.sub}>
                 {type === 'incoming' ? 'Cuộc gọi đến...' : 'Đang gọi...'}
               </Text>
@@ -293,17 +308,12 @@ const CallModalComponent = forwardRef<CallModalRef>((_, ref) => {
         ) : (
           <>
             <View style={styles.inCallContainer}>
-              <View style={styles.avatarContainerSmall}>
-                <Text style={styles.avatarTextSmall}>
-                  {type === 'incoming'
-                    ? form_name?.charAt(0).toUpperCase()
-                    : to_name?.charAt(0).toUpperCase() || 'T'}
-                </Text>
-              </View>
+              <FastImage
+                style={styles.avatarPlaceholder}
+                source={{ uri: data.form_avatar }}
+              ></FastImage>
 
-              <Text style={styles.nameInCall}>
-                {type === 'incoming' ? form_name : to_name || 'Thợ'}
-              </Text>
+              <Text style={styles.nameInCall}>{form_name}</Text>
               <Text style={styles.durationText}>
                 {formatDuration(callDuration)}
               </Text>
@@ -438,11 +448,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   name: {
-    fontSize: 32,
-    color: '#ffffff',
-    fontWeight: '700',
-    marginBottom: 8,
-    textAlign: 'center',
+    ...DefaultStyles.textMedium16Black,
   },
   nameInCall: {
     fontSize: 28,

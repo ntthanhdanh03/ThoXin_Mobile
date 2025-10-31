@@ -20,7 +20,7 @@ import Button from '../components/Button';
 import DateSelection from '../components/DateSelection';
 import PhotoOptionsPicker from '../components/PhotoOptionsPicker';
 
-import { ic_balence } from '../../assets';
+import { ic_balence, ic_map } from '../../assets';
 import { Colors } from '../../styles/Colors';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { RootStackParamList } from '../../navigation/InsideStack';
@@ -165,7 +165,7 @@ const CreateOrderView = () => {
         <View style={styles.contentContainer}>
           <Spacer height={16} />
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔧 Dịch vụ</Text>
+            <Text style={styles.sectionTitle}>Dịch vụ</Text>
             <Selection
               data={serviceData}
               onSelect={(selectedItem: any) =>
@@ -177,7 +177,7 @@ const CreateOrderView = () => {
 
           <Spacer height={20} />
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📝 Mô tả vấn đề</Text>
+            <Text style={styles.sectionTitle}>Mô tả vấn đề</Text>
             <Input
               value={choseService?.Mota || ''}
               area
@@ -194,7 +194,7 @@ const CreateOrderView = () => {
 
           <Spacer height={20} />
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📍 Địa điểm</Text>
+            <Text style={styles.sectionTitle}>Địa điểm</Text>
             <View style={styles.locationContainer}>
               <Input
                 value={address}
@@ -204,11 +204,10 @@ const CreateOrderView = () => {
                 editable={false}
               />
               <TouchableOpacity
-                style={styles.mapButton}
                 onPress={handleNavigationMap}
                 activeOpacity={0.8}
               >
-                <Text style={styles.mapIcon}>🗺️</Text>
+                <FastImage style={{ height: 36, width: 36 }} source={ic_map} />
               </TouchableOpacity>
             </View>
           </View>
@@ -217,7 +216,7 @@ const CreateOrderView = () => {
 
           {/* Date Time */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⏰ Thời gian</Text>
+            <Text style={styles.sectionTitle}>Thời gian</Text>
             <DateSelection
               mode="datetime"
               maximumDate="yes"
@@ -231,7 +230,7 @@ const CreateOrderView = () => {
 
           {/* Images */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📸 Hình ảnh (Tối đa 4 ảnh)</Text>
+            <Text style={styles.sectionTitle}>Hình ảnh (Tối đa 4 ảnh)</Text>
             <View style={styles.imagesWrapper}>
               {images.map((img, index) => (
                 <View key={index} style={styles.imageBox}>
@@ -259,7 +258,6 @@ const CreateOrderView = () => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.addBoxContent}>
-                    <Text style={styles.addIcon}>📷</Text>
                     <Text style={DefaultStyles.textMedium12Black}>
                       Thêm ảnh
                     </Text>
@@ -336,19 +334,7 @@ const styles = StyleSheet.create({
   locationInput: {
     flex: 1,
   },
-  mapButton: {
-    width: scaleModerate(56),
-    height: scaleModerate(56),
-    borderRadius: scaleModerate(16),
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 5,
-  },
+
   mapIcon: {
     fontSize: 28,
   },
@@ -421,7 +407,7 @@ const styles = StyleSheet.create({
     marginBottom: scaleModerate(12),
   },
   priceText: {
-    ...DefaultStyles.textBold16Black,
+    ...DefaultStyles.textMedium14Black,
     color: Colors.green34,
   },
   submitButton: {

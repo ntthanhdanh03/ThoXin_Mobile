@@ -161,7 +161,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
               containerStyle={{
                 position: 'absolute',
                 bottom: 30,
-                width: '90%',
+                width: '100%',
                 alignSelf: 'center',
                 opacity: rating === 0 ? 0.5 : 1,
               }}

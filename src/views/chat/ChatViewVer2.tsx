@@ -16,7 +16,7 @@ import Spacer from '../components/Spacer';
 import { Colors } from '../../styles/Colors';
 import { DefaultStyles } from '../../styles/DefaultStyles';
 import { scaleModerate } from '../../styles/scaleDimensions';
-import { ic_calendar, ic_chevron_left } from '../../assets';
+import { ic_calendar, ic_chevron_left, ic_phone } from '../../assets';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getMessageAction,
@@ -157,11 +157,13 @@ const ChatViewVer2 = () => {
 
                   from_userId: authData?.user?._id,
                   form_name: authData?.user?.fullName,
-                  form_avatar: authData?.user?.avatarUrl,
+                  form_avatar:
+                    authData?.user?.avatarUrl ||
+                    'https://cdn-icons-png.flaticon.com/512/847/847969.png',
                 });
               }}
             >
-              <FastImage style={styles.avatar} source={ic_calendar} />
+              <FastImage style={{ height: 24, width: 24 }} source={ic_phone} />
             </TouchableOpacity>
           </View>
         </View>
